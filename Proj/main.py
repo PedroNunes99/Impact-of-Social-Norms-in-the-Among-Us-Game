@@ -13,28 +13,6 @@ def drawGrid():
     for y in range(0, HEIGHT, TILESIZE):
         pygame.draw.line(SCREEN, BLACK, (0, y), (WIDTH, y))
 
-def updateHealth(agent):
-	pos = agent.getPosition()
-	identifier  = agent.getID()
-	if (isExit(layout,pos[0], pos[1]) and identifier not in agents_saved):
-		agents_saved.append(identifier)
-		all_sprites.remove(agent)
-		all_agents.remove(agent)
-
-	if(agent.getHealth() > 0):
-		if (isSmoke(layout,pos[0], pos[1])): 
-			new_health = agent.getHealth() - SMOKE_DMG
-			agent.setHealth(new_health)
-		if (isFire(layout,pos[0], pos[1])): 
-			new_health = agent.getHealth() - FIRE_DMG
-			agent.setHealth(new_health)
-
-	if(agent.getHealth() <= 0):
-		agent.die()
-		agent.setColor(BLACK)
-		if (identifier not in agents_dead):
-			agents_dead.append(identifier)
-
 def createWalls():
     for i in range(int(GRIDWIDTH)):
         for j in range(int(GRIDHEIGHT)):
@@ -190,127 +168,6 @@ def createWeapons_task():
                 all_weapons_task.add(weapons_task)
 
 
-def createAlarm():
-	pos = [ [index, row.index('A')] for index, row in enumerate(layout) if 'A' in row]
-	for p in pos:
-		i = p[0]
-		j = p[1]
-		alarm = Alarm(i,j)
-		all_sprites.add(alarm)
-		all_alarms.add(alarm)
-
-def alarm():
-	global soundAlarm
-	for alarm in all_alarms:
-		if(alarm.CheckAlarm(layout)):
-			pygame.mixer.Sound.play(fire_alarm)
-			soundAlarm = True
-			break
-	if(soundAlarm):
-		for alarm in all_alarms:
-			alarm.FireAlarm()
-
-
-def createFires():
-	x = random.randrange(0, len(layout))
-	y = random.randrange(0, len(layout[0]))
-	while(isWall(layout,x,y)):
-		x = random.randrange(0, len(layout))
-		y = random.randrange(0, len(layout[0]))
-	addFire(x,y)
-
-def addFire(i,j):
-	fire = Fire(i,j)
-	layout[i][j] = 'F'
-	all_sprites.add(fire)
-	all_fires.add(fire)
-
-def addSmoke(i,j):
-	smoke = Smoke(i,j)
-	layout[i][j] = 'S'
-	all_sprites.add(smoke)
-	all_smokes.add(smoke)
-
-
-def propagateFire(layout):
-	spread    = [True, False] #either it spreads or not
-	propagate = [FIRE,  1-FIRE]
-	smoke     = [SMOKE, 1-SMOKE]
-	row       = [-1, 0, 0, 1]
-	col       = [0, -1, 1, 0]
-
-	new_fires = []
-	for fire in all_fires:
-		i = random.randrange(0, 4)
-		x = fire.x + row[i]
-		y = fire.y + col[i]
-
-		if (x > len(layout)-1 or y > len(layout[0])-1): continue
-
-		propagate_ = propagate
-		if (isSmoke(layout,x, y)):
-			propagate_[0] += (1-propagate_[1])/2
-			propagate_[1] = 1 - propagate_[0]
-		if (choices(spread, propagate_)[0] and not isWall(layout,x,y) and not isFire(layout,x,y) and not isExit(layout,x,y)):
-			for smoke in all_smokes:
-				if smoke.x == x and smoke.y == y:
-					all_smokes.remove(smoke)
-					break
-			new_fires.append([x,y])
-
-	for fire in new_fires:
-		addFire(fire[0], fire[1])
-
-	return layout
-
-
-def propagateSmoke(layout):
-	spread = [True, False]        #either it spreads or not
-	wind   = [0.4, 0.3, 0.2, 0.1]
-	smk    = [SMOKE, 1-SMOKE]
-	row    = [-1, 0, 0, 1]
-	col    = [0, -1, 1, 0]
-	
-	for fire in all_fires:
-
-		for i in range(len(row)):
-
-			x = fire.x + row[i]
-			y = fire.y + col[i]
-
-			if (x > len(layout)-1 or y > len(layout[0])-1): continue
-
-			if (choices(spread, smk)[0] and validPropagation(layout,x,y)):
-				addSmoke(x,y)
-			if (choices(spread, smk)[0] and validPropagation(layout,x,y)):
-				addSmoke(x,y)
-			if (choices(spread, smk)[0] and validPropagation(layout,x,y)):
-				addSmoke(x,y)
-			if (choices(spread, smk)[0] and validPropagation(layout,x,y)):
-				addSmoke(x,y)
-
-
-	for smoke in all_smokes:
-
-		for i in range(len(row)):
-
-			x = smoke.x + row[i]
-			y = smoke.y + col[i]
-
-			if (x > len(layout)-1 or y > len(layout[0])-1): continue
-
-			go = choices(spread, smk)[0]
-			if (go and validPropagation(layout,x,y)):
-				addSmoke(x, y)
-			if (go and validPropagation(layout,x,y)):
-				addSmoke(x, y)
-			if (go and validPropagation(layout,x,y)):
-				addSmoke(x, y)
-			if (go and validPropagation(layout,x,y)):
-				addSmoke(x, y)
-
-	return layout
-
 
 def draw():				
 	SCREEN.fill(WHITE)
@@ -333,14 +190,12 @@ def draw():
 	all_weapons_task.draw(SCREEN)
 	all_navigation.draw(SCREEN)
 	all_navigation_task.draw(SCREEN)
-	#all_smokes.draw(SCREEN)
-	#all_fires.draw(SCREEN)
-	#all_alarms.draw(SCREEN)
-	#all_agents.draw(SCREEN)
+
 	s = 'Saved Agents: ' + str(len(agents_saved))
 	drawText(SCREEN, s, 34, WIDTH/3, HEIGHT)
 	s = 'Dead Agents: ' + str(len(agents_dead))
 	drawText(SCREEN, s, 34, 2*WIDTH/3, HEIGHT)
+
 	drawGrid()
 	pygame.display.flip()
 
@@ -369,7 +224,6 @@ def communicate(speaker):
 if __name__ == "__main__":
 	global SCREEN, CLOCK, layout, all_sprites, all_agents, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls, all_fires, all_smokes, exits, soundAlarm
 
-	soundAlarm = False
 
 	pygame.init()
 	pygame.display.set_caption("Evacuation Simulation")
@@ -423,15 +277,14 @@ if __name__ == "__main__":
 	createNavigation_task()
 	createShields()
 	createShields_task()
-	#createAlarm()
-	#fire_alarm = pygame.mixer.Sound("FireAlarm.wav")
+
 
 	#for i in range(NUM_AGENTS):
 		#player = Agent(i+1, deepcopy(layout), exits, HEALTH_POINTS, 1, True)
 		#all_sprites.add(player)
 		#all_agents.add(player)
 
-	#createFires()
+
 	
 	pause = False
 	run   = True
@@ -472,10 +325,6 @@ if __name__ == "__main__":
 			#	agent.plan_()
 			#	updateHealth(agent)
 
-			#if (i%2 == 0): layout = propagateFire(layout)
-			#if (i%1 == 0): layout = propagateSmoke(layout)
-
-			#alarm()
 
 			#all_agents.update(all_agents)
 			draw()
