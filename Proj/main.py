@@ -171,6 +171,8 @@ def createWeapons_task():
 
 def draw():				
 	SCREEN.fill(WHITE)
+	all_agents.draw(SCREEN)
+
 	all_walls.draw(SCREEN)
 	all_eletrical.draw(SCREEN)
 	all_eletrical_task.draw(SCREEN)
@@ -222,7 +224,7 @@ def communicate(speaker):
 
 # Main
 if __name__ == "__main__":
-	global SCREEN, CLOCK, layout, all_sprites, all_agents, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls, all_fires, all_smokes, exits, soundAlarm
+	global SCREEN, CLOCK, layout, all_sprites, all_agents, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls, all_fires, all_smokes, soundAlarm, tasks
 
 
 	pygame.init()
@@ -233,8 +235,31 @@ if __name__ == "__main__":
 
 	# Create agents
 	layout = getLayout(None)
+	
+	#List of all tasks
+	tasks = []
+	cafetaria_tasks_pos = list(getCafetaria_task(layout))
+	admin_tasks_pos = list(getAdmin_task(layout))
+	eletrical_tasks_pos = list(getEletrical_task(layout))
+	medbay_tasks_pos = list(getMedBay_task(layout))
+	navigation_tasks_pos = list(getNavigation_task(layout))
+	shield_tasks_pos = list(getShield_task(layout))
+	storage_tasks_pos = list(getStorage_task(layout))
+	weapons_tasks_pos = list(getWeapons_task(layout))
+	reactorEngine_tasks_pos = list(getReactorEngine_task(layout))
+	tasks.append(cafetaria_tasks_pos)
+	tasks.append(admin_tasks_pos)
+	tasks.append(eletrical_tasks_pos)
+	tasks.append(medbay_tasks_pos)
+	tasks.append(navigation_tasks_pos)
+	tasks.append(reactorEngine_tasks_pos)
+	tasks.append(shield_tasks_pos)
+	tasks.append(storage_tasks_pos)
+	tasks.append(weapons_tasks_pos)
+
 
 	all_sprites = pygame.sprite.Group()
+	all_agents  = pygame.sprite.Group()
 	all_walls   = pygame.sprite.Group()
 	all_eletrical_task = pygame.sprite.Group()
 	all_eletrical = pygame.sprite.Group()
@@ -279,10 +304,10 @@ if __name__ == "__main__":
 	createShields_task()
 
 
-	#for i in range(NUM_AGENTS):
-		#player = Agent(i+1, deepcopy(layout), exits, HEALTH_POINTS, 1, True)
-		#all_sprites.add(player)
-		#all_agents.add(player)
+	for i in range(NUM_AGENTS):
+		player = Agent(i+1, deepcopy(layout), tasks, HEALTH_POINTS, 1, True)
+		all_sprites.add(player)
+		all_agents.add(player)
 
 
 	

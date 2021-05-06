@@ -11,7 +11,7 @@ import math
 
 
 class Agent(pygame.sprite.Sprite):
-    def __init__(self, identifier, layout, exits, health, risk, communicates):
+    def __init__(self, identifier, layout, tasks, health, risk, communicates):
         pygame.sprite.Sprite.__init__(self)
         self.image  = pygame.Surface((TILESIZE, TILESIZE))
         self.image.fill(DARKRED)
@@ -24,7 +24,7 @@ class Agent(pygame.sprite.Sprite):
         self.communicates = communicates
         self.layout       = layout
         self.plan         = []
-        self.exits        = exits
+        self.tasks        = tasks
         self.danger       = False
         self.reconsider   = False
         self.dead         = False
@@ -34,7 +34,7 @@ class Agent(pygame.sprite.Sprite):
         self.x = random.randrange(0, len(self.layout))
         self.y = random.randrange(0, len(self.layout[0]))
 
-        while(isWall(self.layout,self.x,self.y) or isAlarm(self.layout, self.x,self.y) or isExit(layout, self.x, self.y)):
+        while(isWall(self.layout,self.x,self.y)):
             self.x = random.randrange(0, len(self.layout))
             self.y = random.randrange(0, len(self.layout[0]))
 
@@ -145,7 +145,7 @@ class Agent(pygame.sprite.Sprite):
             i = random.randrange(0, 4)
             x = self.x + row[i]
             y = self.y + col[i]
-            if (not isWall(self.layout,x,y) and not isFire(self.layout,x,y) and not isSmoke(self.layout,x,y) and not isExit(self.layout,x,y) and not isAlarm(self.layout,x,y)):
+            if (not isWall(self.layout,x,y)):
                 return [[x, y]]
         return [[self.x, self.y]]
 
@@ -170,7 +170,7 @@ class Agent(pygame.sprite.Sprite):
         for i in range(len(row)):
             x = self.x + row[i]
             y = self.y + col[i]
-            if (not isWall(self.layout,x,y) and not isFire(self.layout,x,y) and not isSmoke(self.layout,x,y) and not isAlarm(self.layout,x,y)):
+            if (not isWall(self.layout,x,y) ):
                 return [[x,y]]
         for i in range(len(row)):
             x = self.x + row[i]
@@ -213,7 +213,7 @@ class Agent(pygame.sprite.Sprite):
                 y = cur[1] + col[i]
 
                 if (x < 0 or y < 0 or x >= len(self.layout) or y >= len(self.layout[0])): continue
-                if(not isWall(self.layout,x,y) and not isFire(self.layout,x,y) and visited[x][y] == 0 and not isAlarm(self.layout,x,y)):
+                if(not isWall(self.layout,x,y)):
                     visited[x][y] = 1
                     l = [x, y]
                     queue.append(l)
@@ -239,7 +239,7 @@ class Agent(pygame.sprite.Sprite):
 
     def Dijkstra(self):
         source  = [self.x, self.y]
-        dests   = self.exits
+        dests   = self.target_pos
 
         if (source in dests):
             return [source]
@@ -297,7 +297,7 @@ class Agent(pygame.sprite.Sprite):
                 if (enqueued[(x,y)] == False ):
                     continue
 
-                if(not isWall(self.layout,x,y) and not isFire(self.layout,x,y) and not isAlarm(self.layout,x,y) and visited[x][y] == 0):
+                if(not isWall(self.layout,x,y) and visited[x][y] == 0):
                     visited[x][y] = 1
                     
                     #Compute cost of this transition
