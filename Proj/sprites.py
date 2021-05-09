@@ -11,15 +11,13 @@ import math
 
 
 class Agent(pygame.sprite.Sprite):
-    def __init__(self, identifier, layout, tasks, health, risk, communicates):
+    def __init__(self, identifier, layout, tasks, risk, communicates):
         pygame.sprite.Sprite.__init__(self)
         self.image  = pygame.Surface((TILESIZE, TILESIZE))
         self.image.fill(DARKRED)
         self.rect = self.image.get_rect()
 
-
         self.id           = identifier
-        self.health       = health
         self.risk         = risk
         self.communicates = communicates
         self.layout       = layout
@@ -31,12 +29,29 @@ class Agent(pygame.sprite.Sprite):
         self.range        = VIS_RANGE
         self.volume       = VOL_RANGE
 
-        self.x = random.randrange(0, len(self.layout))
-        self.y = random.randrange(0, len(self.layout[0]))
+        if (self.id == 1):
+            self.image.fill(GREEN)
+        
 
-        while(isWall(self.layout,self.x,self.y)):
-            self.x = random.randrange(0, len(self.layout))
-            self.y = random.randrange(0, len(self.layout[0]))
+        tasks_aux = []
+        nums = [j for j in range(NUM_TOTAL_TASKS)]
+
+        for i in range (NUM_TASKS_AGENT):
+            random_task = random.choice(nums)
+            tasks_aux.append(self.tasks[random_task])
+            nums.remove(random_task)
+
+        self.tasks = tasks_aux
+        
+        pos = random.choice(CAFETARIA_POS)
+        self.x = pos[0]
+        self.y = pos[1]
+        #self.x = random.randrange(0, len(self.layout))
+        #self.y = random.randrange(0, len(self.layout[0]))
+
+        #while(isWall(self.layout,self.x,self.y)):
+        #    self.x = random.randrange(0, len(self.layout))
+         #   self.y = random.randrange(0, len(self.layout[0]))
 
         self.new_x = -1
         self.new_y = -1
@@ -52,15 +67,9 @@ class Agent(pygame.sprite.Sprite):
     
     def getLayout(self):
         return self.layout
-    
-    def getHealth(self):
-        return self.health
 
     def getVolume(self):
         return self.volume
-    
-    def setHealth(self, new_health):
-        self.health = new_health
 
     def setColor(self, color):
         self.image.fill(color)
@@ -83,6 +92,12 @@ class Agent(pygame.sprite.Sprite):
 
     def isCommunicative(self):
         return self.communicates
+
+    def isTask (self, task):
+        for i in range(len(task)):
+            if (self.x == task[i][0] and self.y == task[i][1]):
+                self.tasks = self.tasks[1:]
+
 
 
     def update(self, all_agents):
@@ -109,7 +124,7 @@ class Agent(pygame.sprite.Sprite):
     def receiveMessage(self, message):
         for i in range(len(message)):
             for j in range(len(message[i])):
-                if (self.layout[i][j] != message[i][j] and (isFire(message,i,j) or isSmoke(message,i,j))):
+                if (self.layout[i][j] != message[i][j]):
                     self.danger       = True
                     self.reconsider   = True
                     self.layout[i][j] = message[i][j]
@@ -151,10 +166,18 @@ class Agent(pygame.sprite.Sprite):
 
 
     def plan_(self):
-        if (not self.danger):     #walk randomly
-            self.plan = self.moveRandom()
-        elif (self.reconsider):
+        
+        #if (not self.danger):     #walk randomly
+            #self.plan = self.moveRandom()
+        #elif (self.reconsider):
+        if (len(self.tasks) >0):
             self.plan = self.Dijkstra()
+        elif (len(self.tasks) == 0):
+            self.plan = self.moveRandom()
+        #dsa = True
+        #while (self.x != self.plan[-1][0] and self.y != self.plan[-1][1]):
+            #self.plan = self.plan
+
 
 
     #Our reactive agent logic
@@ -175,71 +198,12 @@ class Agent(pygame.sprite.Sprite):
         for i in range(len(row)):
             x = self.x + row[i]
             y = self.y + col[i]
-            if (isSmoke(self.layout,x,y)):
-                return [[x,y]]
         return [[self.x,self.y]] #desisti
-    
-
-    def BFS(self):
-        source  = [self.x, self.y]
-        dests   = self.exits
-       	visited = [[0 for _ in range(len(self.layout))] for _ in range(len(self.layout))]
-        queue   = []
-        path    = []
-        prev    = []
-        my_dest = []
-
-        if (source in dests):
-        	return [source]
-
-        queue.append(source)
-        visited[source[0]][source[1]] = 1
-        
-        row = [-1, 0, 0, 1]
-        col = [0, -1, 1, 0]
-        
-        while (len(queue) > 0):
-            cur = queue.pop(0)
-            if(cur in dests): 
-                my_dest = cur
-                break
-
-            combined = list(zip(row, col))
-            random.shuffle(combined)
-            row, col = zip(*combined)
-
-            for i in range(len(row)):
-                x = cur[0] + row[i]
-                y = cur[1] + col[i]
-
-                if (x < 0 or y < 0 or x >= len(self.layout) or y >= len(self.layout[0])): continue
-                if(not isWall(self.layout,x,y)):
-                    visited[x][y] = 1
-                    l = [x, y]
-                    queue.append(l)
-                    prev.append([l, cur])
-
-        panic = True
-        for dest in dests:
-            if visited[dest[0]][dest[1]]:
-                panic = False
-
-        if panic:
-            return self.panic()
-
-        at = my_dest
-        while at != source:
-            path.append(at)
-            for i in range(len(prev)):
-                if(at == prev[i][0]): 
-                	at = prev[i][1]
-        path.reverse()
-        return path
 
 
     def Dijkstra(self):
         source  = [self.x, self.y]
-        dests   = self.target_pos
+        dests   = self.tasks[0]
 
         if (source in dests):
             return [source]
@@ -274,7 +238,6 @@ class Agent(pygame.sprite.Sprite):
             
             cur    = heapq.heappop(queue)
             parent = (cur[1], cur[2])
-
             if (not enqueued[parent]):
                 continue
 
@@ -302,8 +265,7 @@ class Agent(pygame.sprite.Sprite):
                     
                     #Compute cost of this transition
                     weight = 1
-                    if (isSmoke(self.layout,x,y)):
-                        weight += 1-self.risk
+
 
                     alternative = distance[parent] + weight
 
@@ -313,13 +275,13 @@ class Agent(pygame.sprite.Sprite):
                         heapq.heappush(queue,[alternative, x, y])
                         enqueued[(x,y)] = True
 
-        panic = True
-        for dest in dests:
-            if visited[dest[0]][dest[1]]:
-                panic = False
+        #panic = True
+        #for dest in dests:
+            #if visited[dest[0]][dest[1]]:
+                #panic = False
 
-        if panic:
-            return self.panic()
+        #if panic:
+            #return self.panic()
 
         path = []
         at   = my_dest

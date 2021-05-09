@@ -171,7 +171,7 @@ def createWeapons_task():
 
 def draw():				
 	SCREEN.fill(WHITE)
-	all_agents.draw(SCREEN)
+
 
 	all_walls.draw(SCREEN)
 	all_eletrical.draw(SCREEN)
@@ -192,6 +192,7 @@ def draw():
 	all_weapons_task.draw(SCREEN)
 	all_navigation.draw(SCREEN)
 	all_navigation_task.draw(SCREEN)
+	all_agents.draw(SCREEN)
 
 	s = 'Saved Agents: ' + str(len(agents_saved))
 	drawText(SCREEN, s, 34, WIDTH/3, HEIGHT)
@@ -232,7 +233,7 @@ if __name__ == "__main__":
 	SCREEN = pygame.display.set_mode((WIDTH, HEIGHT+40))
 	CLOCK = pygame.time.Clock()
 	SCREEN.fill(BLACK)
-
+	
 	# Create agents
 	layout = getLayout(None)
 	
@@ -279,10 +280,8 @@ if __name__ == "__main__":
 	all_navigation_task = pygame.sprite.Group()
 	all_weapons = pygame.sprite.Group()
 	all_weapons_task = pygame.sprite.Group()
-	#all_agents  = pygame.sprite.Group()
-	#all_fires   = pygame.sprite.Group()
-	#all_smokes  = pygame.sprite.Group()
-	#all_alarms  = pygame.sprite.Group()
+	all_agents  = pygame.sprite.Group()
+
 	createWalls()
 	createEletricalTask()
 	createEletrical()
@@ -305,12 +304,13 @@ if __name__ == "__main__":
 
 
 	for i in range(NUM_AGENTS):
-		player = Agent(i+1, deepcopy(layout), tasks, HEALTH_POINTS, 1, True)
+		player = Agent(i+1, deepcopy(layout), tasks, 1, True)
+		#player.tasks = random.choice(tasks)
 		all_sprites.add(player)
 		all_agents.add(player)
-
-
 	
+
+
 	pause = False
 	run   = True
 	
@@ -322,7 +322,6 @@ if __name__ == "__main__":
 	while run:
 		
 		CLOCK.tick(FPS)
-		
 		for event in pygame.event.get():
 
 			if event.type == pygame.QUIT:
@@ -339,19 +338,22 @@ if __name__ == "__main__":
 
 		#if len(agents_saved) + len(agents_dead) == NUM_AGENTS:
 		#	break
-
 		if not pause:
 			
-			#for agent in all_agents:
-			#	agent.percept(layout)
-			#	agent.checkAlarm(soundAlarm)
-			#	communicate(agent)
-			#for agent in all_agents:
-			#	agent.plan_()
-			#	updateHealth(agent)
+
+			for agent in all_agents:
+				agent.percept(layout)
+				if (len(agent.tasks)>0):
+					task = agent.tasks[0]
+					agent.isTask(task)
+				#agent.checkAlarm(soundAlarm)
+				#communicate(agent)
+			for agent in all_agents:
+				agent.plan_()
+				
 
 
-			#all_agents.update(all_agents)
+			all_agents.update(all_agents)
 			draw()
 
 		i+=1

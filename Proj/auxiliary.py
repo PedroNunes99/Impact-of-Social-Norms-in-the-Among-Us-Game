@@ -91,6 +91,21 @@ def getCafetaria_task(layout):
 	
 	return task
 
+def getCafetaria(layout):
+	place = []
+	for index, row in enumerate(layout):
+		if 'C' in row:
+			aux = 0
+			indexes = []
+			for i in range(len(row)):
+				if (row[i] == 'C'):
+					aux+=1
+					indexes.append(i)
+			for i in range(aux):
+				place.append([index,indexes[i]])
+	
+	return place
+
 def getEletrical_task(layout):
 	task = []
 	for index, row in enumerate(layout):
