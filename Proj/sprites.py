@@ -22,12 +22,18 @@ class Agent(pygame.sprite.Sprite):
         self.communicates = communicates
         self.layout       = layout
         self.plan         = []
+        self.plan_before  = []
         self.tasks        = tasks
         self.danger       = False
         self.reconsider   = False
         self.dead         = False
         self.range        = VIS_RANGE
         self.volume       = VOL_RANGE
+        self.timer        = 20
+        self.queue        = 0
+        self.inTask       = False
+        
+
 
         if (self.id == 1):
             self.image.fill(GREEN)
@@ -37,11 +43,18 @@ class Agent(pygame.sprite.Sprite):
         nums = [j for j in range(NUM_TOTAL_TASKS)]
 
         for i in range (NUM_TASKS_AGENT):
+            #if (i==0):
+
+             #   tasks_aux.append(self.tasks[0])
+                #nums.remove(random_task)
+
             random_task = random.choice(nums)
             tasks_aux.append(self.tasks[random_task])
             nums.remove(random_task)
 
-        self.tasks = tasks_aux
+        self.tasks     = tasks_aux
+        task_len = len(self.tasks[0])
+        self.randTask  = random.randint(0,task_len-1)
         
         pos = random.choice(CAFETARIA_POS)
         self.x = pos[0]
@@ -96,7 +109,16 @@ class Agent(pygame.sprite.Sprite):
     def isTask (self, task):
         for i in range(len(task)):
             if (self.x == task[i][0] and self.y == task[i][1]):
-                self.tasks = self.tasks[1:]
+                self.inTask = True
+                if (self.timer == 0):
+                    self.tasks = self.tasks[1:]
+                    if (len(self.tasks)>0):
+                        self.randTask = random.randint(0,len(self.tasks)-1)
+                    self.timer = 20
+                    self.queue = 0
+                    self.inTask = False
+                else:
+                    self.timer -= 1
 
 
 
@@ -111,7 +133,8 @@ class Agent(pygame.sprite.Sprite):
                         return 
 
                 self.move(dx = (self.new_x - self.x), dy = (self.new_y - self.y))
-                self.plan    = self.plan[1:]
+                self.plan_before = self.plan
+                self.plan        = self.plan[1:]
                 self.rect.x  = self.x * TILESIZE 
                 self.rect.y  = self.y * TILESIZE
 
@@ -171,7 +194,12 @@ class Agent(pygame.sprite.Sprite):
             #self.plan = self.moveRandom()
         #elif (self.reconsider):
         if (len(self.tasks) >0):
-            self.plan = self.Dijkstra()
+            new_plan = self.Dijkstra()
+            if (new_plan == self.plan_before and len(self.plan_before)!=0 and not self.inTask):
+                self.queue +=1
+                
+            self.plan        = new_plan
+            self.plan_before = self.plan
         elif (len(self.tasks) == 0):
             self.plan = self.moveRandom()
         #dsa = True
@@ -203,7 +231,10 @@ class Agent(pygame.sprite.Sprite):
 
     def Dijkstra(self):
         source  = [self.x, self.y]
-        dests   = self.tasks[0]
+        possible_dests = self.tasks[0]
+        dests   = [possible_dests[self.randTask]]
+       # if (self.id ==1):
+        #    print(dests)
 
         if (source in dests):
             return [source]
@@ -285,6 +316,7 @@ class Agent(pygame.sprite.Sprite):
 
         path = []
         at   = my_dest
+
         while at != source:
             path.append(at)
             at = parents[tuple(at)]

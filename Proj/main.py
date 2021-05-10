@@ -229,7 +229,7 @@ if __name__ == "__main__":
 
 
 	pygame.init()
-	pygame.display.set_caption("Evacuation Simulation")
+	pygame.display.set_caption("Among US simulation")
 	SCREEN = pygame.display.set_mode((WIDTH, HEIGHT+40))
 	CLOCK = pygame.time.Clock()
 	SCREEN.fill(BLACK)
