@@ -131,13 +131,15 @@ class Agent(pygame.sprite.Sprite):
                 for agent in all_agents:
                     if not agent.isDead() and agent.getPosition() == [self.new_x, self.new_y] and not agent.getNewPosition() == [self.x, self.y]:
                         return 
+                    #elif agent.isDead():
+                    #    agent.plan = []
+                    #    agent.setColor(1)
 
                 self.move(dx = (self.new_x - self.x), dy = (self.new_y - self.y))
                 self.plan_before = self.plan
                 self.plan        = self.plan[1:]
                 self.rect.x  = self.x * TILESIZE 
                 self.rect.y  = self.y * TILESIZE
-
 
     def checkAlarm(self, alarm):
         if alarm and not self.danger:
@@ -357,6 +359,7 @@ class Cafetaria_task(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = self.x * TILESIZE 
         self.rect.y = self.y * TILESIZE
+        self.pos = []
 
 class Admin(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -379,6 +382,7 @@ class Admin_task(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = self.x * TILESIZE 
         self.rect.y = self.y * TILESIZE
+        self.pos = []
 
 class Storage(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -401,6 +405,7 @@ class Storage_task(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = self.x * TILESIZE 
         self.rect.y = self.y * TILESIZE
+        self.pos = []
 
 class Shield(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -423,6 +428,7 @@ class Shield_task(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = self.x * TILESIZE 
         self.rect.y = self.y * TILESIZE
+        self.pos = []
 
 class Navigation(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -445,6 +451,7 @@ class Navigation_task(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = self.x * TILESIZE 
         self.rect.y = self.y * TILESIZE
+        self.pos = []
 
 class Weapons(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -467,6 +474,7 @@ class Weapons_task(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = self.x * TILESIZE 
         self.rect.y = self.y * TILESIZE
+        self.pos = []
 
 
 class Eletrical_task(pygame.sprite.Sprite):
@@ -479,6 +487,7 @@ class Eletrical_task(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = self.x * TILESIZE 
         self.rect.y = self.y * TILESIZE
+        self.pos = []
 
 class Eletrical(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -512,6 +521,7 @@ class Reactor_task(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = self.x * TILESIZE 
         self.rect.y = self.y * TILESIZE
+        self.pos = []
 
 class Medbay(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -534,3 +544,4 @@ class Medbay_task(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = self.x * TILESIZE 
         self.rect.y = self.y * TILESIZE
+        self.pos = []

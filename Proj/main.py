@@ -351,8 +351,6 @@ if __name__ == "__main__":
 			for agent in all_agents:
 				agent.plan_()
 				
-
-
 			all_agents.update(all_agents)
 			draw()
 
