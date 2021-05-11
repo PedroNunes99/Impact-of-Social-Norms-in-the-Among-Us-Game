@@ -54,6 +54,16 @@ class Agent(pygame.sprite.Sprite):
         self.new_x = -1
         self.new_y = -1
 
+    def isImpostor(self):
+        return False
+
+    def setSettings(self,font,id_color,background_color,pos_x,pos_y):
+        self.font = pygame.font.SysFont("freesansbold", 16)
+        self.textSurf = self.font.render(str(self.id), 1, id_color,background_color)
+        self.image = pygame.Surface((TILESIZE, TILESIZE))
+        self.image.fill(background_color)
+        self.image.blit(self.textSurf, [pos_x, pos_y])
+
     def getPosition(self):
         return [self.x, self.y]
 
@@ -115,7 +125,7 @@ class Agent(pygame.sprite.Sprite):
                         return 
                     elif agent.isDead():
                         agent.plan = []
-                        agent.setColor(1)
+                        agent.setSettings(pygame.font.SysFont("freesansbold", 16),WHITE,BLACK,2,0)
                         dead_agents.add(agent)
                         all_agents.remove(agent)
                         
@@ -213,8 +223,7 @@ class Agent(pygame.sprite.Sprite):
         source  = [self.x, self.y]
         possible_dests = self.tasks[0]
         dests   = [possible_dests[self.randTask]]
-       # if (self.id ==1):
-        #    print(dests)
+
 
         if (source in dests):
             return [source]
@@ -314,6 +323,8 @@ class Impostor(Agent) :
         self.image.fill(YELLOW)
         self.image.blit(self.textSurf, [4, 0])
 
+        self.tasks = []
+
         self.crewmates_locations = dict() #id:(pos)
         self.crewmates_status = dict() #id: alive/dead (boolean)
 
@@ -326,12 +337,25 @@ class Impostor(Agent) :
 
     #TODO Impostor's plan function
 
-    def isImpostor():
+    def isImpostor(self):
         return True
 
-    def kill(self, crewmate):
-        crewmate.die()
-        self.crewmates_status[crewmate.getID()] = False
+    def kill(self, all_agents):
+        isClose,crewmate = self.isClose(all_agents)
+        if (isClose):
+
+            crewmate.die()
+            self.crewmates_status[crewmate.getID()] = False
+
+    def isClose(self, all_agents):
+        for agent in all_agents:
+            if (not agent.isImpostor()):
+                x = agent.x
+                y = agent.y
+                if (self.x + 1 == x or self.x - 1 == x or self.x == x):
+                    if(self.y == y or self.y -1 == y or self.y + 1 == y):
+                        return True,agent
+        return False,0
 
 
 class Wall(pygame.sprite.Sprite):

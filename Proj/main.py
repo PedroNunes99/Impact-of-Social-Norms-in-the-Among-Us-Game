@@ -241,7 +241,6 @@ if __name__ == "__main__":
 	#List of all tasks
 	tasks = []
 	cafetaria_tasks_pos = list(getCafetaria_task(layout))
-	print(list(getCafetaria(layout)))
 	admin_tasks_pos = list(getAdmin_task(layout))
 	eletrical_tasks_pos = list(getEletrical_task(layout))
 	medbay_tasks_pos = list(getMedBay_task(layout))
@@ -308,7 +307,6 @@ if __name__ == "__main__":
 
 	for i in range(1, NUM_AGENTS):
 		player = Agent(i, deepcopy(layout), tasks, True)
-		#player.tasks = random.choice(tasks)
 		all_sprites.add(player)
 		all_agents.add(player)
 	
@@ -347,9 +345,11 @@ if __name__ == "__main__":
 
 			for agent in all_agents:
 				agent.percept(layout)
-				if (len(agent.tasks)>0):
+				if (len(agent.tasks)>0 and not agent.isImpostor()):
 					task = agent.tasks[0]
 					agent.isTask(task)
+				if (agent.isImpostor()):
+					agent.kill(all_agents)
 				#agent.checkAlarm(soundAlarm)
 				#communicate(agent)
 			for agent in all_agents:
