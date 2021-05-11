@@ -193,6 +193,7 @@ def draw():
 	all_navigation.draw(SCREEN)
 	all_navigation_task.draw(SCREEN)
 	all_agents.draw(SCREEN)
+	dead_agents.draw(SCREEN)
 
 	s = 'Saved Agents: ' + str(len(agents_saved))
 	drawText(SCREEN, s, 34, WIDTH/3, HEIGHT)
@@ -225,7 +226,7 @@ def communicate(speaker):
 
 # Main
 if __name__ == "__main__":
-	global SCREEN, CLOCK, layout, all_sprites, all_agents, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls, all_fires, all_smokes, soundAlarm, tasks
+	global SCREEN, CLOCK, layout, all_sprites, all_agents, dead_agents, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls, all_fires, all_smokes, soundAlarm, tasks
 
 
 	pygame.init()
@@ -240,6 +241,7 @@ if __name__ == "__main__":
 	#List of all tasks
 	tasks = []
 	cafetaria_tasks_pos = list(getCafetaria_task(layout))
+	print(list(getCafetaria(layout)))
 	admin_tasks_pos = list(getAdmin_task(layout))
 	eletrical_tasks_pos = list(getEletrical_task(layout))
 	medbay_tasks_pos = list(getMedBay_task(layout))
@@ -260,7 +262,7 @@ if __name__ == "__main__":
 
 
 	all_sprites = pygame.sprite.Group()
-	all_agents  = pygame.sprite.Group()
+	dead_agents = pygame.sprite.Group()
 	all_walls   = pygame.sprite.Group()
 	all_eletrical_task = pygame.sprite.Group()
 	all_eletrical = pygame.sprite.Group()
@@ -281,6 +283,7 @@ if __name__ == "__main__":
 	all_weapons = pygame.sprite.Group()
 	all_weapons_task = pygame.sprite.Group()
 	all_agents  = pygame.sprite.Group()
+	dead_agents = pygame.sprite.Group()
 
 	createWalls()
 	createEletricalTask()
@@ -346,12 +349,16 @@ if __name__ == "__main__":
 				if (len(agent.tasks)>0):
 					task = agent.tasks[0]
 					agent.isTask(task)
+					if (i == 60):
+						if (agent.id == 1):
+							agent.dead = True
+					print(all_agents)
 				#agent.checkAlarm(soundAlarm)
 				#communicate(agent)
 			for agent in all_agents:
 				agent.plan_()
 				
-			all_agents.update(all_agents)
+			all_agents.update(all_agents,dead_agents)
 			draw()
 
 		i+=1

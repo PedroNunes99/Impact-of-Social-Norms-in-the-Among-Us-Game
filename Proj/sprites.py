@@ -13,11 +13,19 @@ import math
 class Agent(pygame.sprite.Sprite):
     def __init__(self, identifier, layout, tasks, risk, communicates):
         pygame.sprite.Sprite.__init__(self)
-        self.image  = pygame.Surface((TILESIZE, TILESIZE))
+        self.id           = identifier
+        self.font = pygame.font.SysFont("freesansbold", 16)
+        self.textSurf = self.font.render(str(self.id), 1, WHITE,DARKRED)
+        self.image = pygame.Surface((TILESIZE, TILESIZE))
+        W = TILESIZE
+        H = TILESIZE
         self.image.fill(DARKRED)
+        self.image.blit(self.textSurf, [2, 0])
+
+        
         self.rect = self.image.get_rect()
 
-        self.id           = identifier
+        
         self.risk         = risk
         self.communicates = communicates
         self.layout       = layout
@@ -32,11 +40,7 @@ class Agent(pygame.sprite.Sprite):
         self.timer        = 20
         self.queue        = 0
         self.inTask       = False
-        
-
-
-        if (self.id == 1):
-            self.image.fill(GREEN)
+      
         
 
         tasks_aux = []
@@ -122,7 +126,7 @@ class Agent(pygame.sprite.Sprite):
 
 
 
-    def update(self, all_agents):
+    def update(self, all_agents,dead_agents):
         if (not self.dead):
             if (len(self.plan)>0):
                 self.new_x = (self.plan[0][0])
@@ -131,9 +135,12 @@ class Agent(pygame.sprite.Sprite):
                 for agent in all_agents:
                     if not agent.isDead() and agent.getPosition() == [self.new_x, self.new_y] and not agent.getNewPosition() == [self.x, self.y]:
                         return 
-                    #elif agent.isDead():
-                    #    agent.plan = []
-                    #    agent.setColor(1)
+                    elif agent.isDead():
+                        agent.plan = []
+                        agent.setColor(1)
+                        dead_agents.add(agent)
+                        all_agents.remove(agent)
+                        
 
                 self.move(dx = (self.new_x - self.x), dy = (self.new_y - self.y))
                 self.plan_before = self.plan
