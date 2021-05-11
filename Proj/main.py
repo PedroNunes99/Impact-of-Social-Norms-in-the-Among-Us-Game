@@ -306,13 +306,14 @@ if __name__ == "__main__":
 	createShields_task()
 
 
-	for i in range(NUM_AGENTS):
-		player = Agent(i+1, deepcopy(layout), tasks, 1, True)
+	for i in range(1, NUM_AGENTS):
+		player = Agent(i, deepcopy(layout), tasks, True)
 		#player.tasks = random.choice(tasks)
 		all_sprites.add(player)
 		all_agents.add(player)
 	
-
+	player = Impostor(i+1, all_agents, deepcopy(layout), tasks, True)
+	all_agents.add(player)
 
 	pause = False
 	run   = True
@@ -349,10 +350,6 @@ if __name__ == "__main__":
 				if (len(agent.tasks)>0):
 					task = agent.tasks[0]
 					agent.isTask(task)
-					if (i == 60):
-						if (agent.id == 1):
-							agent.dead = True
-					print(all_agents)
 				#agent.checkAlarm(soundAlarm)
 				#communicate(agent)
 			for agent in all_agents:

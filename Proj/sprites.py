@@ -11,46 +11,33 @@ import math
 
 
 class Agent(pygame.sprite.Sprite):
-    def __init__(self, identifier, layout, tasks, risk, communicates):
+    def __init__(self, identifier, layout, tasks, communicates):
         pygame.sprite.Sprite.__init__(self)
         self.id           = identifier
         self.font = pygame.font.SysFont("freesansbold", 16)
         self.textSurf = self.font.render(str(self.id), 1, WHITE,DARKRED)
         self.image = pygame.Surface((TILESIZE, TILESIZE))
-        W = TILESIZE
-        H = TILESIZE
         self.image.fill(DARKRED)
         self.image.blit(self.textSurf, [2, 0])
 
-        
         self.rect = self.image.get_rect()
 
-        
-        self.risk         = risk
         self.communicates = communicates
         self.layout       = layout
         self.plan         = []
         self.plan_before  = []
         self.tasks        = tasks
-        self.danger       = False
         self.reconsider   = False
         self.dead         = False
         self.range        = VIS_RANGE
         self.volume       = VOL_RANGE
         self.timer        = 20
-        self.queue        = 0
         self.inTask       = False
       
-        
-
         tasks_aux = []
         nums = [j for j in range(NUM_TOTAL_TASKS)]
 
         for i in range (NUM_TASKS_AGENT):
-            #if (i==0):
-
-             #   tasks_aux.append(self.tasks[0])
-                #nums.remove(random_task)
 
             random_task = random.choice(nums)
             tasks_aux.append(self.tasks[random_task])
@@ -63,12 +50,6 @@ class Agent(pygame.sprite.Sprite):
         pos = random.choice(CAFETARIA_POS)
         self.x = pos[0]
         self.y = pos[1]
-        #self.x = random.randrange(0, len(self.layout))
-        #self.y = random.randrange(0, len(self.layout[0]))
-
-        #while(isWall(self.layout,self.x,self.y)):
-        #    self.x = random.randrange(0, len(self.layout))
-         #   self.y = random.randrange(0, len(self.layout[0]))
 
         self.new_x = -1
         self.new_y = -1
@@ -119,12 +100,9 @@ class Agent(pygame.sprite.Sprite):
                     if (len(self.tasks)>0):
                         self.randTask = random.randint(0,len(self.tasks)-1)
                     self.timer = 20
-                    self.queue = 0
                     self.inTask = False
                 else:
                     self.timer -= 1
-
-
 
     def update(self, all_agents,dead_agents):
         if (not self.dead):
@@ -148,10 +126,6 @@ class Agent(pygame.sprite.Sprite):
                 self.rect.x  = self.x * TILESIZE 
                 self.rect.y  = self.y * TILESIZE
 
-    def checkAlarm(self, alarm):
-        if alarm and not self.danger:
-            self.danger     = True
-            self.reconsider = True
     
     def receiveMessage(self, message):
         for i in range(len(message)):
@@ -178,7 +152,6 @@ class Agent(pygame.sprite.Sprite):
         for i in range(x0, x1+1):
             for j in range(y0, y1+1):
                 if (self.layout[i][j] != layout[i][j]):
-                    self.danger       = True
                     self.reconsider   = True
                     self.layout[i][j] = layout[i][j]
 
@@ -204,8 +177,8 @@ class Agent(pygame.sprite.Sprite):
         #elif (self.reconsider):
         if (len(self.tasks) >0):
             new_plan = self.Dijkstra()
-            if (new_plan == self.plan_before and len(self.plan_before)!=0 and not self.inTask):
-                self.queue +=1
+            #if (new_plan == self.plan_before and len(self.plan_before)!=0 and not self.inTask):
+             #   self.queue +=1
                 
             self.plan        = new_plan
             self.plan_before = self.plan
@@ -215,10 +188,8 @@ class Agent(pygame.sprite.Sprite):
         #while (self.x != self.plan[-1][0] and self.y != self.plan[-1][1]):
             #self.plan = self.plan
 
-
-
     #Our reactive agent logic
-    def panic(self):
+    def panic(self): #Crewmate only - calling a voting session to expose impostor
         #search for a free adjacent cell. if there's none, search for a cell with smoke. if there's none, give up :(
         row = [-1, 0, 0, 1]
         col = [0, -1, 1, 0]
@@ -238,7 +209,7 @@ class Agent(pygame.sprite.Sprite):
         return [[self.x,self.y]] #desisti
 
 
-    def Dijkstra(self):
+    def Dijkstra(self): #TODO change to receive position!!!!!!
         source  = [self.x, self.y]
         possible_dests = self.tasks[0]
         dests   = [possible_dests[self.randTask]]
@@ -332,6 +303,35 @@ class Agent(pygame.sprite.Sprite):
 
         path.reverse()
         return path
+
+class Impostor(Agent) :
+    def __init__(self, identifier, crewmates, layout, tasks, communicates):
+        Agent.__init__(self, identifier, layout, tasks, communicates)
+
+        self.font = pygame.font.SysFont("freesansbold", 16)
+        self.textSurf = self.font.render("I", 1, BLACK, YELLOW)
+        self.image = pygame.Surface((TILESIZE, TILESIZE))
+        self.image.fill(YELLOW)
+        self.image.blit(self.textSurf, [4, 0])
+
+        self.crewmates_locations = dict() #id:(pos)
+        self.crewmates_status = dict() #id: alive/dead (boolean)
+
+        for agent in crewmates:
+            self.crewmates_locations[agent.getID()] = agent.getPosition()
+            self.crewmates_status[agent.getID()] = True
+
+    def update(self, all_agents, dead_agents):
+        return super().update(all_agents, dead_agents)
+
+    #TODO Impostor's plan function
+
+    def isImpostor():
+        return True
+
+    def kill(self, crewmate):
+        crewmate.die()
+        self.crewmates_status[crewmate.getID()] = False
 
 
 class Wall(pygame.sprite.Sprite):
