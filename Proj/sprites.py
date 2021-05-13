@@ -25,7 +25,6 @@ class Agent(pygame.sprite.Sprite):
         self.communicates = communicates
         self.layout       = layout
         self.plan         = []
-        self.plan_before  = []
         self.tasks        = tasks
         self.reconsider   = False
         self.dead         = False
@@ -33,6 +32,9 @@ class Agent(pygame.sprite.Sprite):
         self.volume       = VOL_RANGE
         self.timer        = 20
         self.inTask       = False
+        self.taskLocked   = []
+
+        pos = random.choice(tasks[0]) #randomly chooses a position from cafetaria to spawn
       
         tasks_aux = []
         nums = [j for j in range(NUM_TOTAL_TASKS)]
@@ -44,10 +46,11 @@ class Agent(pygame.sprite.Sprite):
             nums.remove(random_task)
 
         self.tasks     = tasks_aux
+
         task_len = len(self.tasks[0])
         self.randTask  = random.randint(0,task_len-1)
         
-        pos = random.choice(CAFETARIA_POS)
+        
         self.x = pos[0]
         self.y = pos[1]
 
@@ -106,10 +109,11 @@ class Agent(pygame.sprite.Sprite):
             if (self.x == task[i][0] and self.y == task[i][1]):
                 self.inTask = True
                 if (self.timer == 0):
-                    self.tasks = self.tasks[1:]
+                    self.tasks      = self.tasks[1:]
+                    self.taskLocked = []
                     if (len(self.tasks)>0):
                         self.randTask = random.randint(0,len(self.tasks)-1)
-                    self.timer = 20
+                    self.timer  = 20
                     self.inTask = False
                 else:
                     self.timer -= 1
@@ -131,7 +135,6 @@ class Agent(pygame.sprite.Sprite):
                         
 
                 self.move(dx = (self.new_x - self.x), dy = (self.new_y - self.y))
-                self.plan_before = self.plan
                 self.plan        = self.plan[1:]
                 self.rect.x  = self.x * TILESIZE 
                 self.rect.y  = self.y * TILESIZE
@@ -185,13 +188,21 @@ class Agent(pygame.sprite.Sprite):
         #if (not self.danger):     #walk randomly
             #self.plan = self.moveRandom()
         #elif (self.reconsider):
-        if (len(self.tasks) >0):
-            new_plan = self.Dijkstra()
+        if (len(self.tasks) >0 and not self.isImpostor()):
+            if (not self.taskLocked):
+                self.taskLocked = random.choice(self.tasks[0])
+                
+            new_plan = self.Dijkstra([self.taskLocked])
             #if (new_plan == self.plan_before and len(self.plan_before)!=0 and not self.inTask):
              #   self.queue +=1
-                
             self.plan        = new_plan
-            self.plan_before = self.plan
+        
+        if(self.isImpostor()):
+           crewmate_ID = self.closestCrewmate() 
+           crewmate_pos = self.crewmates_locations[crewmate_ID]
+           new_plan         = self.Dijkstra([crewmate_pos])
+           self.plan        = new_plan
+
         elif (len(self.tasks) == 0):
             self.plan = self.moveRandom()
         #dsa = True
@@ -219,11 +230,8 @@ class Agent(pygame.sprite.Sprite):
         return [[self.x,self.y]] #desisti
 
 
-    def Dijkstra(self): #TODO change to receive position!!!!!!
+    def Dijkstra(self, dests): #TODO change to receive position!!!!!!
         source  = [self.x, self.y]
-        possible_dests = self.tasks[0]
-        dests   = [possible_dests[self.randTask]]
-
 
         if (source in dests):
             return [source]
@@ -333,7 +341,24 @@ class Impostor(Agent) :
             self.crewmates_status[agent.getID()] = True
 
     def update(self, all_agents, dead_agents):
+        for agent in all_agents:
+            self.crewmates_locations[agent.getID()] = agent.getPosition()
         return super().update(all_agents, dead_agents)
+
+    def closestCrewmate (self):
+        closest      = -1
+        min_distance = math.inf
+        for agent in self.crewmates_status.keys():
+            if (self.crewmates_status[agent]):
+                aux = len(self.Dijkstra([self.crewmates_locations[agent]]))
+
+                if (aux < min_distance):
+                    aux     = min_distance
+                    closest = agent
+                    
+        return closest
+
+
 
     #TODO Impostor's plan function
 
