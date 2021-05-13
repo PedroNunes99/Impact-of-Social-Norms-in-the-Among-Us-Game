@@ -11,7 +11,7 @@ import math
 
 
 class Agent(pygame.sprite.Sprite):
-    def __init__(self, identifier, layout, tasks, communicates):
+    def __init__(self, identifier, layout, starting_room, communicates):
         pygame.sprite.Sprite.__init__(self)
         self.id           = identifier
         self.font = pygame.font.SysFont("freesansbold", 16)
@@ -25,40 +25,20 @@ class Agent(pygame.sprite.Sprite):
         self.communicates = communicates
         self.layout       = layout
         self.plan         = []
-        self.tasks        = tasks
         self.reconsider   = False
         self.dead         = False
         self.range        = VIS_RANGE
         self.volume       = VOL_RANGE
         self.timer        = 20
-        self.inTask       = False
-        self.taskLocked   = []
 
-        pos = random.choice(tasks[0]) #randomly chooses a position from cafetaria to spawn
-      
-        tasks_aux = []
-        nums = [j for j in range(NUM_TOTAL_TASKS)]
-
-        for i in range (NUM_TASKS_AGENT):
-
-            random_task = random.choice(nums)
-            tasks_aux.append(self.tasks[random_task])
-            nums.remove(random_task)
-
-        self.tasks     = tasks_aux
-
-        task_len = len(self.tasks[0])
-        self.randTask  = random.randint(0,task_len-1)
-        
-        
+        pos = random.choice(starting_room) #randomly chooses a position from cafetaria to spawn
+            
         self.x = pos[0]
         self.y = pos[1]
 
         self.new_x = -1
         self.new_y = -1
 
-    def isImpostor(self):
-        return False
 
     def setSettings(self,font,id_color,background_color,pos_x,pos_y):
         self.font = pygame.font.SysFont("freesansbold", 16)
@@ -104,20 +84,6 @@ class Agent(pygame.sprite.Sprite):
     def isCommunicative(self):
         return self.communicates
 
-    def isTask (self, task):
-        for i in range(len(task)):
-            if (self.x == task[i][0] and self.y == task[i][1]):
-                self.inTask = True
-                if (self.timer == 0):
-                    self.tasks      = self.tasks[1:]
-                    self.taskLocked = []
-                    if (len(self.tasks)>0):
-                        self.randTask = random.randint(0,len(self.tasks)-1)
-                    self.timer  = 20
-                    self.inTask = False
-                else:
-                    self.timer -= 1
-
     def update(self, all_agents,dead_agents):
         if (not self.dead):
             if (len(self.plan)>0):
@@ -139,7 +105,6 @@ class Agent(pygame.sprite.Sprite):
                 self.rect.x  = self.x * TILESIZE 
                 self.rect.y  = self.y * TILESIZE
 
-    
     def receiveMessage(self, message):
         for i in range(len(message)):
             for j in range(len(message[i])):
@@ -168,7 +133,6 @@ class Agent(pygame.sprite.Sprite):
                     self.reconsider   = True
                     self.layout[i][j] = layout[i][j]
 
-
     def moveRandom(self):
         row  = [-1, 0, 0, 1]
         col  = [0, -1, 1, 0]
@@ -182,32 +146,6 @@ class Agent(pygame.sprite.Sprite):
                 return [[x, y]]
         return [[self.x, self.y]]
 
-
-    def plan_(self):
-        
-        #if (not self.danger):     #walk randomly
-            #self.plan = self.moveRandom()
-        #elif (self.reconsider):
-        if (len(self.tasks) >0 and not self.isImpostor()):
-            if (not self.taskLocked):
-                self.taskLocked = random.choice(self.tasks[0])
-                
-            new_plan = self.Dijkstra([self.taskLocked])
-            #if (new_plan == self.plan_before and len(self.plan_before)!=0 and not self.inTask):
-             #   self.queue +=1
-            self.plan        = new_plan
-        
-        if(self.isImpostor()):
-           crewmate_ID = self.closestCrewmate() 
-           crewmate_pos = self.crewmates_locations[crewmate_ID]
-           new_plan         = self.Dijkstra([crewmate_pos])
-           self.plan        = new_plan
-
-        elif (len(self.tasks) == 0):
-            self.plan = self.moveRandom()
-        #dsa = True
-        #while (self.x != self.plan[-1][0] and self.y != self.plan[-1][1]):
-            #self.plan = self.plan
 
     #Our reactive agent logic
     def panic(self): #Crewmate only - calling a voting session to expose impostor
@@ -322,8 +260,8 @@ class Agent(pygame.sprite.Sprite):
         return path
 
 class Impostor(Agent) :
-    def __init__(self, identifier, crewmates, layout, tasks, communicates):
-        Agent.__init__(self, identifier, layout, tasks, communicates)
+    def __init__(self, identifier, crewmates, layout, starting_room, communicates):
+        Agent.__init__(self, identifier, layout, starting_room, communicates)
 
         self.font = pygame.font.SysFont("freesansbold", 16)
         self.textSurf = self.font.render("I", 1, BLACK, YELLOW)
@@ -349,7 +287,7 @@ class Impostor(Agent) :
         closest      = -1
         min_distance = math.inf
         for agent in self.crewmates_status.keys():
-            if (self.crewmates_status[agent]):
+            if (self.crewmates_status[agent]): #If crewmate is alive
                 aux = len(self.Dijkstra([self.crewmates_locations[agent]]))
 
                 if (aux < min_distance):
@@ -358,10 +296,13 @@ class Impostor(Agent) :
                     
         return closest
 
-
-
-    #TODO Impostor's plan function
-
+    #Impostor's plan function
+    def plan_(self):
+        crewmate_ID = self.closestCrewmate() 
+        crewmate_pos = self.crewmates_locations[crewmate_ID]
+        new_plan         = self.Dijkstra([crewmate_pos])
+        self.plan        = new_plan
+   
     def isImpostor(self):
         return True
 
@@ -381,6 +322,58 @@ class Impostor(Agent) :
                     if(self.y == y or self.y -1 == y or self.y + 1 == y):
                         return True,agent
         return False,0
+
+class Crewmate(Agent):
+    def __init__(self, identifier, layout, tasks,  starting_room, communicates):
+        super().__init__(identifier, layout,  starting_room, communicates)
+        self.tasks        = tasks
+        self.inTask       = False
+        self.taskLocked   = []
+
+        tasks_aux = []
+        nums = [j for j in range(NUM_TOTAL_TASKS)]
+
+        for i in range (NUM_TASKS_AGENT):
+
+            random_task = random.choice(nums)
+            tasks_aux.append(self.tasks[random_task])
+            nums.remove(random_task)
+
+        self.tasks     = tasks_aux
+
+        task_len = len(self.tasks[0])
+        self.randTask  = random.randint(0,task_len-1)
+
+    def isImpostor(self):
+        return False
+
+    def isTask (self, task):
+        for i in range(len(task)):
+            if (self.x == task[i][0] and self.y == task[i][1]):
+                self.inTask = True
+                if (self.timer == 0):
+                    self.tasks      = self.tasks[1:]
+                    self.taskLocked = []
+                    if (len(self.tasks)>0):
+                        self.randTask = random.randint(0,len(self.tasks)-1)
+                    self.timer  = 20
+                    self.inTask = False
+                else:
+                    self.timer -= 1
+    
+    def plan_(self):
+        
+        if (len(self.tasks) >0 and not self.isImpostor()):
+            if (not self.taskLocked):
+                self.taskLocked = random.choice(self.tasks[0])
+                
+            new_plan = self.Dijkstra([self.taskLocked])
+            #if (new_plan == self.plan_before and len(self.plan_before)!=0 and not self.inTask):
+             #   self.queue +=1
+            self.plan        = new_plan
+        
+        elif (len(self.tasks) == 0):
+            self.plan = self.moveRandom()
 
 
 class Wall(pygame.sprite.Sprite):

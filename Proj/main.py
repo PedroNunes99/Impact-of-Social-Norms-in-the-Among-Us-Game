@@ -197,9 +197,9 @@ def draw():
 
 	s = 'Saved Agents: ' + str(len(agents_saved))
 	drawText(SCREEN, s, 34, WIDTH/3, HEIGHT)
-	s = 'Dead Agents: ' + str(len(agents_dead))
+	s = 'Dead Agents: '+ str(len(dead_agents))
 	drawText(SCREEN, s, 34, 2*WIDTH/3, HEIGHT)
-
+	
 	drawGrid()
 	pygame.display.flip()
 
@@ -306,18 +306,17 @@ if __name__ == "__main__":
 
 
 	for i in range(1, NUM_AGENTS):
-		player = Agent(i, deepcopy(layout), tasks, True)
+		player = Crewmate(i, deepcopy(layout), tasks, cafetaria_tasks_pos, True)
 		all_sprites.add(player)
 		all_agents.add(player)
 	
-	player = Impostor(i+1, all_agents, deepcopy(layout), tasks, True)
+	player = Impostor(i+1, all_agents, deepcopy(layout), cafetaria_tasks_pos, True)
 	all_agents.add(player)
 
 	pause = False
 	run   = True
 	
 	agents_saved = []
-	agents_dead = []
 
 	# Main cycle
 	i = 0
@@ -338,7 +337,7 @@ if __name__ == "__main__":
 			pygame.mixer.unpause()
 
 
-		#if len(agents_saved) + len(agents_dead) == NUM_AGENTS:
+		#if len(agents_saved) + len(dead_agents) == NUM_AGENTS:
 		#	break
 		if not pause:
 			
