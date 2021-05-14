@@ -29,7 +29,7 @@ class Agent(pygame.sprite.Sprite):
         self.dead         = False
         self.range        = VIS_RANGE
         self.volume       = VOL_RANGE
-        self.timer        = 20
+        self.timer        = TASK_TIME
 
         pos = random.choice(starting_room) #randomly chooses a position from cafetaria to spawn
             
@@ -84,26 +84,26 @@ class Agent(pygame.sprite.Sprite):
     def isCommunicative(self):
         return self.communicates
 
-    def update(self, all_agents,dead_agents):
+    def update(self, all_agents):
+
         if (not self.dead):
             if (len(self.plan)>0):
                 self.new_x = (self.plan[0][0])
                 self.new_y = (self.plan[0][1])
                 
                 for agent in all_agents:
-                    if not agent.isDead() and agent.getPosition() == [self.new_x, self.new_y] and not agent.getNewPosition() == [self.x, self.y]:
+                    if agent.getPosition() == [self.new_x, self.new_y] and not agent.getNewPosition() == [self.x, self.y]:
                         return 
-                    elif agent.isDead():
-                        agent.plan = []
-                        agent.setSettings(pygame.font.SysFont("freesansbold", 16),WHITE,BLACK,2,0)
-                        dead_agents.add(agent)
-                        all_agents.remove(agent)
-                        
 
                 self.move(dx = (self.new_x - self.x), dy = (self.new_y - self.y))
                 self.plan        = self.plan[1:]
                 self.rect.x  = self.x * TILESIZE 
                 self.rect.y  = self.y * TILESIZE
+
+        else:
+            self.x = self.x
+            self.y = self.y
+         
 
     def receiveMessage(self, message):
         for i in range(len(message)):
@@ -269,19 +269,24 @@ class Impostor(Agent) :
         self.image.fill(YELLOW)
         self.image.blit(self.textSurf, [4, 0])
 
-        self.tasks = []
+        self.tasks               = []
 
         self.crewmates_locations = dict() #id:(pos)
-        self.crewmates_status = dict() #id: alive/dead (boolean)
+        self.crewmates_status    = dict() #id: alive/dead (boolean)
+
+        self.timer               = TIMER_NEAREST_CREWMATE #timer to calculate nearest crewmate
+        self.kill_timer          = COOLDOWN_KILL #cooldown for the kill_function
+        self.target              = 0
+        self.target_locked       = False
 
         for agent in crewmates:
             self.crewmates_locations[agent.getID()] = agent.getPosition()
             self.crewmates_status[agent.getID()] = True
 
-    def update(self, all_agents, dead_agents):
+    def update(self, all_agents):
         for agent in all_agents:
             self.crewmates_locations[agent.getID()] = agent.getPosition()
-        return super().update(all_agents, dead_agents)
+        return super().update(all_agents)
 
     def closestCrewmate (self):
         closest      = -1
@@ -298,29 +303,74 @@ class Impostor(Agent) :
 
     #Impostor's plan function
     def plan_(self):
-        crewmate_ID = self.closestCrewmate() 
-        crewmate_pos = self.crewmates_locations[crewmate_ID]
-        new_plan         = self.Dijkstra([crewmate_pos])
-        self.plan        = new_plan
+        if(self.kill_timer == COOLDOWN_KILL):
+            if ( self.timer == TIMER_NEAREST_CREWMATE):
+                self.timer       = 0
+                self.target      = self.closestCrewmate() 
+            crewmate_pos     = self.crewmates_locations[self.target]
+            self.plan        = self.Dijkstra([crewmate_pos])
+
+        else:
+            self.plan = self.moveRandom()
+            if (self.timer < TIMER_NEAREST_CREWMATE):
+                self.timer      += 1
+
+            if (self.kill_timer < COOLDOWN_KILL):
+                self.kill_timer += 1
+
    
     def isImpostor(self):
         return True
 
-    def kill(self, all_agents):
-        isClose,crewmate = self.isClose(all_agents)
-        if (isClose):
+    def kill(self, all_agents,dead_agents):
 
-            crewmate.die()
-            self.crewmates_status[crewmate.getID()] = False
+        if (self.timer == TIMER_NEAREST_CREWMATE and self.target == 0 ):
+
+            isClose,self.target = self.isClose(all_agents)
+
+        else:
+            isClose,self.target = self.isClose(all_agents)
+            if(self.timer < TIMER_NEAREST_CREWMATE):
+                self.timer += 1
+
+
+        if (self.kill_timer < COOLDOWN_KILL):
+            self.kill_timer += 1
+
+        if (isClose and self.kill_timer == COOLDOWN_KILL and self.target != 0):
+            for agent in all_agents:
+
+                if agent.getID() == self.target:
+                    victim = agent
+                    
+            self.crewmates_status[self.target] = False
+
+            victim.die()
+            victim.plan = []
+            victim.setSettings(pygame.font.SysFont("freesansbold", 16),WHITE,BLACK,2,0)
+            dead_agents.add(victim)
+            all_agents.remove(victim)
+
+            self.kill_timer = 0
+            self.target     = 0
+            
 
     def isClose(self, all_agents):
         for agent in all_agents:
-            if (not agent.isImpostor()):
+            if (not agent.isImpostor() and agent.getID() == self.target):
                 x = agent.x
                 y = agent.y
                 if (self.x + 1 == x or self.x - 1 == x or self.x == x):
                     if(self.y == y or self.y -1 == y or self.y + 1 == y):
-                        return True,agent
+                        return True,agent.getID()
+                return False,agent.getID()
+            else:
+                if (not agent.isImpostor()):
+                    x = agent.x
+                    y = agent.y
+                    if (self.x + 1 == x or self.x - 1 == x or self.x == x):
+                        if(self.y == y or self.y -1 == y or self.y + 1 == y):
+                            return True,agent.getID()
         return False,0
 
 class Crewmate(Agent):

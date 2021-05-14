@@ -192,8 +192,8 @@ def draw():
 	all_weapons_task.draw(SCREEN)
 	all_navigation.draw(SCREEN)
 	all_navigation_task.draw(SCREEN)
-	all_agents.draw(SCREEN)
 	dead_agents.draw(SCREEN)
+	all_agents.draw(SCREEN)
 
 	s = 'Saved Agents: ' + str(len(agents_saved))
 	drawText(SCREEN, s, 34, WIDTH/3, HEIGHT)
@@ -306,11 +306,11 @@ if __name__ == "__main__":
 
 
 	for i in range(1, NUM_AGENTS):
-		player = Crewmate(i, deepcopy(layout), tasks, cafetaria_tasks_pos, True)
+		player = Crewmate(i, deepcopy(layout), tasks, list(getCafetaria(layout)), True)
 		all_sprites.add(player)
 		all_agents.add(player)
 	
-	player = Impostor(i+1, all_agents, deepcopy(layout), cafetaria_tasks_pos, True)
+	player = Impostor(i+1, all_agents, deepcopy(layout), list(getCafetaria(layout)), True)
 	all_agents.add(player)
 
 	pause = False
@@ -348,13 +348,13 @@ if __name__ == "__main__":
 					task = agent.tasks[0]
 					agent.isTask(task)
 				if (agent.isImpostor()):
-					agent.kill(all_agents)
+					agent.kill(all_agents, dead_agents)
 				#agent.checkAlarm(soundAlarm)
 				#communicate(agent)
 			for agent in all_agents:
 				agent.plan_()
 				
-			all_agents.update(all_agents,dead_agents)
+			all_agents.update(all_agents)
 			draw()
 
 		i+=1
