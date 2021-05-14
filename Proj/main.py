@@ -6,7 +6,6 @@ from sprites import *
 from copy import deepcopy
 import time
 
-
 def drawGrid():
     for x in range(0, WIDTH, TILESIZE):
         pygame.draw.line(SCREEN, BLACK, (x, 0), (x, HEIGHT))
@@ -195,14 +194,17 @@ def draw():
 	all_agents.draw(SCREEN)
 
 	agents_dead_count = 0
+	agents_alive_count = 0
+
 	for agent in all_agents:
-		if (agent.isDead()):
+		if (agent.isDead() and not agent.isImpostor()):
 			agents_dead_count +=1
+		elif not agent.isDead() and not agent.isImpostor():
+			agents_alive_count += 1
 
-
-	s = 'Saved Agents: ' + str(len(agents_saved))
+	s = 'Agents Alive: ' + str(agents_alive_count)
 	drawText(SCREEN, s, 34, WIDTH/3, HEIGHT)
-	s = 'Dead Agents: '+ str(len(dead_agents))
+	s = 'Dead Agents: '+ str(agents_dead_count)
 	drawText(SCREEN, s, 34, 2*WIDTH/3, HEIGHT)
 	
 	drawGrid()
@@ -232,7 +234,6 @@ def communicate(speaker):
 # Main
 if __name__ == "__main__":
 	global SCREEN, CLOCK, layout, all_sprites, all_agents, dead_agents, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls, all_fires, all_smokes, soundAlarm, tasks
-
 
 	pygame.init()
 	pygame.display.set_caption("Among US simulation")
@@ -319,13 +320,15 @@ if __name__ == "__main__":
 		all_agents.add(player)
 	
 	player = Impostor(i+1, all_agents, deepcopy(layout), cafetaria_pos, True)
+	all_sprites.add(player)
 	all_agents.add(player)
+
+	for agent in all_agents:
+		print(agent.getPosition())
 
 	pause = False
 	run   = True
 	
-	agents_saved = []
-
 	# Main cycle
 	i = 0
 	while run:
@@ -349,7 +352,6 @@ if __name__ == "__main__":
 		#	break
 		if not pause:
 			
-
 			for agent in all_agents:
 				agent.percept(layout)
 				if (len(agent.tasks)>0 and not agent.isImpostor() and not agent.isDead()):
@@ -357,6 +359,8 @@ if __name__ == "__main__":
 					agent.isTask(task)
 				if (agent.isImpostor()):
 					agent.kill(all_agents)
+					agent.updateTimers()
+				agent.draw = True 
 				#agent.checkAlarm(soundAlarm)
 				#communicate(agent)
 			for agent in all_agents:
