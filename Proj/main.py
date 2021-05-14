@@ -202,10 +202,10 @@ def draw():
 		elif not agent.isDead() and not agent.isImpostor():
 			agents_alive_count += 1
 
-	s = 'Agents Alive: ' + str(agents_alive_count)
-	drawText(SCREEN, s, 34, WIDTH/3, HEIGHT)
-	s = 'Dead Agents: '+ str(agents_dead_count)
-	drawText(SCREEN, s, 34, 2*WIDTH/3, HEIGHT)
+	s = 'Crewmates Alive: ' + str(agents_alive_count)
+	drawText(SCREEN, s, 34, WIDTH/3 - + WIDTH/24, HEIGHT)
+	s = 'Dead Crewmates: '+ str(agents_dead_count)
+	drawText(SCREEN, s, 34, 2*WIDTH/3 + WIDTH/16, HEIGHT)
 	
 	drawGrid()
 	pygame.display.flip()
