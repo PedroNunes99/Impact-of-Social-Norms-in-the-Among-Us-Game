@@ -1,5 +1,6 @@
 # Sprites
 
+from auxiliary import getLayout, isWall
 import pygame
 import random
 from random import choices
@@ -84,7 +85,7 @@ class Agent(pygame.sprite.Sprite):
     def isCommunicative(self):
         return self.communicates
 
-    def update(self, all_agents):
+    def update(self, all_agents, agents_positions):
 
         if (not self.dead):
             if (len(self.plan)>0):
@@ -96,6 +97,7 @@ class Agent(pygame.sprite.Sprite):
                         return 
 
                 self.move(dx = (self.new_x - self.x), dy = (self.new_y - self.y))
+                agents_positions[self.getID()] = self.getPosition()
                 self.plan        = self.plan[1:]
                 self.rect.x  = self.x * TILESIZE 
                 self.rect.y  = self.y * TILESIZE
@@ -145,27 +147,6 @@ class Agent(pygame.sprite.Sprite):
             if (not isWall(self.layout,x,y)):
                 return [[x, y]]
         return [[self.x, self.y]]
-
-
-    #Our reactive agent logic
-    def panic(self): #Crewmate only - calling a voting session to expose impostor
-        #search for a free adjacent cell. if there's none, search for a cell with smoke. if there's none, give up :(
-        row = [-1, 0, 0, 1]
-        col = [0, -1, 1, 0]
-
-        combined = list(zip(row, col))
-        random.shuffle(combined)
-        row, col = zip(*combined)
-        
-        for i in range(len(row)):
-            x = self.x + row[i]
-            y = self.y + col[i]
-            if (not isWall(self.layout,x,y) ):
-                return [[x,y]]
-        for i in range(len(row)):
-            x = self.x + row[i]
-            y = self.y + col[i]
-        return [[self.x,self.y]] #desisti
 
 
     def Dijkstra(self, dests): #TODO change to receive position!!!!!!
@@ -231,8 +212,6 @@ class Agent(pygame.sprite.Sprite):
                     
                     #Compute cost of this transition
                     weight = 1
-
-
                     alternative = distance[parent] + weight
 
                     if (alternative < distance[(x,y)]):
@@ -240,14 +219,6 @@ class Agent(pygame.sprite.Sprite):
                         parents[(x,y)]  = list(parent)
                         heapq.heappush(queue,[alternative, x, y])
                         enqueued[(x,y)] = True
-
-        #panic = True
-        #for dest in dests:
-            #if visited[dest[0]][dest[1]]:
-                #panic = False
-
-        #if panic:
-            #return self.panic()
 
         path = []
         at   = my_dest
@@ -283,10 +254,10 @@ class Impostor(Agent) :
             self.crewmates_locations[agent.getID()] = agent.getPosition()
             self.crewmates_status[agent.getID()] = True
 
-    def update(self, all_agents):
+    def update(self, all_agents, agents_positions):
         for agent in all_agents:
             self.crewmates_locations[agent.getID()] = agent.getPosition()
-        return super().update(all_agents)
+        return super().update(all_agents, agents_positions)
 
     def closestCrewmate (self):
         closest      = -1
@@ -326,7 +297,7 @@ class Impostor(Agent) :
     def isImpostor(self):
         return True
 
-    def kill(self, all_agents):
+    def kill(self, all_agents, dead_agents):
 
         if (self.timer == TIMER_NEAREST_CREWMATE and self.target == 0 ):
 
@@ -342,9 +313,10 @@ class Impostor(Agent) :
 
                 if agent.getID() == self.target:
                     victim = agent
-            self.crewmates_status[self.target] = False
-
+           
             victim.die()
+            dead_agents.add(victim)
+            self.crewmates_status[self.target] = False
             victim.plan = []
             victim.setSettings(pygame.font.SysFont("freesansbold", 16),WHITE,BLACK,2,0)
             self.kill_timer = 0
@@ -376,6 +348,8 @@ class Crewmate(Agent):
         self.inTask       = False
         self.taskLocked   = []
         self.timer        = TASK_TIME
+        self.callingVote = False
+        self.foundImpostor = -1
 
         tasks_aux = []
         nums = [j for j in range(NUM_TOTAL_TASKS)]
@@ -390,6 +364,7 @@ class Crewmate(Agent):
 
         task_len = len(self.tasks[0])
         self.randTask  = random.randint(0,task_len-1)
+
 
     def isImpostor(self):
         return False
@@ -422,6 +397,42 @@ class Crewmate(Agent):
         elif (len(self.tasks) == 0):
             self.plan = self.moveRandom()
 
+    def rangeOfSight(self, radius):
+        reachable_pos = []
+        curr_pos = self.getPosition()
+        for i in range(-radius, radius):
+            for j in range(-radius, radius):
+                pos = [curr_pos[0]+i, curr_pos[1]+ j]
+                if not isWall(self.getLayout(), pos[0], pos[1]):
+                    reachable_pos.append(pos)
+        return reachable_pos
+
+    #Our reactive agent logic
+    def scanGround(self, all_agents): 
+        range = self.rangeOfSight(4)
+        found_dead = []
+        for pos in range:
+            #if agent is dead in any position, call meeting
+            for agent in all_agents:
+                if ((agent.getPosition() == pos) and (agent.isDead())):
+                    self.callVoting(found_dead)
+
+            # check if the impostor killed a crewmate in front of me 
+            # self.callVoting(impostorID)
+        return
+
+    #Crewmate only - calling a voting session to expose impostor
+    def callVoting(self, impostorID = -1):
+        print("Agent ", self.getID(), " called a voting session")
+        self.callingVote = True
+        self.foundImpostor = impostorID
+        return
+
+    def vote(self):
+        return
+    
+
+        
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, x, y):

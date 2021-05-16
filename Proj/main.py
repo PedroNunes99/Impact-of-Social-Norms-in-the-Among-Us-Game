@@ -166,11 +166,29 @@ def createWeapons_task():
                 all_sprites.add(weapons_task)
                 all_weapons_task.add(weapons_task)
 
-
-
-def draw():				
+def drawVotingScreen():
 	SCREEN.fill(WHITE)
+	pygame.display.flip()
 
+def drawDeliberationScreen():
+	SCREEN.fill(WHITE)
+	pygame.display.flip()
+
+def drawWinImpostor():
+	SCREEN.fill(WHITE)
+	s = "The Impostor Won"
+	drawText(SCREEN, s, 34, WIDTH/2, HEIGHT/2)
+	pygame.display.flip()
+
+def drawWinCrewmates():
+	SCREEN.fill(WHITE)
+	s = "The Crewmates Won"
+	drawText(SCREEN, s, 34, WIDTH/2, HEIGHT/2)
+	pygame.display.flip()
+
+#Draw main world
+def draw():		 		
+	SCREEN.fill(WHITE)
 
 	all_walls.draw(SCREEN)
 	all_eletrical.draw(SCREEN)
@@ -214,7 +232,7 @@ def draw():
 font_name = pygame.font.match_font('arial')
 def drawText(surf, text, size, x, y):
 	font = pygame.font.Font(font_name, size)
-	text_surface = font.render(text, True, WHITE, BLACK)
+	text_surface = font.render(text, True, BLACK, WHITE)
 	text_rect = text_surface.get_rect()
 	text_rect.midtop = (int(x),int(y))
 	surf.blit(text_surface, text_rect)
@@ -230,17 +248,59 @@ def communicate(speaker):
 		if assertInRange(speaker, listener):
 			listener.receiveMessage(speaker.getLayout())
 
+def updateWorld():
+	all_agents.update(all_agents, agents_locations)
+
+	#update agents locations
+	for agent in all_agents:
+		agents_locations[agent.getID()] = agent.getPosition()
+		
+	#check if an agent called a voting session
+	for agent in all_agents:
+		if (not agent.isImpostor()) and (agent.callingVote):
+			votingSession(agent.foundImpostor)
+			agent.callingVote = False
+
+	#draw all agents
+	draw()
+
+
+def votingSession(foundImpostor):
+	drawVotingScreen()
+
+	# CASE 1: A crewmate caught the impostor em flagrante
+	if(foundImpostor):
+		print("Case 1")
+	# CASE 2: A crewmate just found a dead body
+	else:
+		print("Case 2")
+
+	#delete already found dead bodies and re-distribute tasks
+	unassigned_tasks = [] #non completed tasks previously belonging to dead agents
+	for agent in all_agents:
+		if agent.isDead():
+			for task in agent.tasks:
+				unassigned_tasks.append(task)
+			all_agents.remove(agent)
+
+	for agent in all_agents:
+		if(len(unassigned_tasks) > 0):
+			task = unassigned_tasks[len(unassigned_tasks)-1]
+			agent.tasks.append(task)
+			unassigned_tasks.remove(task)
+		else:
+			break
+	return
 
 # Main
 if __name__ == "__main__":
-	global SCREEN, CLOCK, layout, all_sprites, all_agents, dead_agents, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls, all_fires, all_smokes, soundAlarm, tasks
+	global SCREEN, CLOCK, layout, all_sprites, all_agents, dead_agents, agents_locations, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls,  tasks
 
 	pygame.init()
 	pygame.display.set_caption("Among US simulation")
 	SCREEN = pygame.display.set_mode((WIDTH, HEIGHT+40))
 	CLOCK = pygame.time.Clock()
-	SCREEN.fill(BLACK)
-	
+
 	# Create agents
 	layout = getLayout(None)
 	
@@ -267,7 +327,6 @@ if __name__ == "__main__":
 
 
 	all_sprites = pygame.sprite.Group()
-	dead_agents = pygame.sprite.Group()
 	all_walls   = pygame.sprite.Group()
 	all_eletrical_task = pygame.sprite.Group()
 	all_eletrical = pygame.sprite.Group()
@@ -312,19 +371,20 @@ if __name__ == "__main__":
 
 	cafetaria_pos = list(getCafetaria(layout))
 
+	agents_locations = dict() #id: location
+
 	for i in range(1, NUM_AGENTS):
 		player = Crewmate(i, deepcopy(layout), tasks, cafetaria_pos, True)
 		pos =[player.x,player.y]
 		cafetaria_pos.remove(pos) 
 		all_sprites.add(player)
 		all_agents.add(player)
+		agents_locations[i] = pos
 	
 	player = Impostor(i+1, all_agents, deepcopy(layout), cafetaria_pos, True)
+	agents_locations[i] = player.getPosition()
 	all_sprites.add(player)
 	all_agents.add(player)
-
-	for agent in all_agents:
-		print(agent.getPosition())
 
 	pause = False
 	run   = True
@@ -348,17 +408,23 @@ if __name__ == "__main__":
 			pygame.mixer.unpause()
 
 
-		#if len(agents_saved) + len(dead_agents) == NUM_AGENTS:
-		#	break
+		if (len(dead_agents) == NUM_AGENTS - 1):
+			drawWinImpostor()
+
+			run = False
+			pause = True
+			break
+		
 		if not pause:
 			
 			for agent in all_agents:
 				agent.percept(layout)
 				if (len(agent.tasks)>0 and not agent.isImpostor() and not agent.isDead()):
+					agent.scanGround(all_agents)
 					task = agent.tasks[0]
 					agent.isTask(task)
 				if (agent.isImpostor()):
-					agent.kill(all_agents)
+					agent.kill(all_agents, dead_agents)
 					agent.updateTimers()
 				agent.draw = True 
 				#agent.checkAlarm(soundAlarm)
@@ -367,11 +433,11 @@ if __name__ == "__main__":
 				if (not agent.isDead()):
 					agent.plan_()
 			
-			all_agents.update(all_agents)
-			draw()
+			updateWorld()
 
 		i+=1
 
 	pygame.mixer.pause()
-	time.sleep(2)
+	time.sleep(5)
 	pygame.quit()
+
