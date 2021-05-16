@@ -19,10 +19,11 @@ class Agent(pygame.sprite.Sprite):
         self.textSurf = self.font.render(str(self.id), 1, WHITE,DARKRED)
         self.image = pygame.Surface((TILESIZE, TILESIZE))
         self.image.fill(DARKRED)
-        self.image.blit(self.textSurf, [2, 0])
+        self.image.blit(self.textSurf, [2, 0]) 
 
         self.rect = self.image.get_rect()
 
+        self.beliefs      = dict() #id:(belief)
         self.communicates = communicates
         self.layout       = layout
         self.plan         = []
@@ -40,6 +41,9 @@ class Agent(pygame.sprite.Sprite):
         self.new_y = -1
 
         self.draw  = False
+
+    def getBeliefs():
+        return self.beliefs
 
     def setSettings(self,font,id_color,background_color,pos_x,pos_y):
         self.font = pygame.font.SysFont("freesansbold", 16)
@@ -84,6 +88,16 @@ class Agent(pygame.sprite.Sprite):
 
     def isCommunicative(self):
         return self.communicates
+
+    def rangeOfSight(self, radius):
+        reachable_pos = []
+        curr_pos = self.getPosition()
+        for i in range(-radius, radius):
+            for j in range(-radius, radius):
+                pos = [curr_pos[0]+i, curr_pos[1]+ j]
+                if not isWall(self.getLayout(), pos[0], pos[1]):
+                    reachable_pos.append(pos)
+        return reachable_pos
 
     def update(self, all_agents, agents_positions):
 
@@ -311,8 +325,13 @@ class Impostor(Agent) :
 
             for agent in all_agents:
 
-                if agent.getID() == self.target:
+                range = self.rangeOfSight(VIS_RANGE)
+
+                if (agent.getID() == self.target):
                     victim = agent
+
+                elif (agent.getPosition() in range):
+                    agent.foundImpostor = self.getID()
            
             victim.die()
             dead_agents.add(victim)
@@ -369,6 +388,19 @@ class Crewmate(Agent):
     def isImpostor(self):
         return False
 
+    #Our reactive agent logic
+    def scanGround(self, all_agents): 
+        range = self.rangeOfSight(VIS_RANGE)
+        for pos in range:
+            #if agent is dead in any position, call meeting
+            for agent in all_agents:
+                if ((agent.getPosition() == pos) and (agent.isDead())):
+                    self.callVoting()
+
+            # check if the impostor killed a crewmate in front of me 
+            # self.callVoting(impostorID)
+        return
+
     def isTask (self, task):
         for i in range(len(task)):
             if (self.x == task[i][0] and self.y == task[i][1]):
@@ -397,34 +429,11 @@ class Crewmate(Agent):
         elif (len(self.tasks) == 0):
             self.plan = self.moveRandom()
 
-    def rangeOfSight(self, radius):
-        reachable_pos = []
-        curr_pos = self.getPosition()
-        for i in range(-radius, radius):
-            for j in range(-radius, radius):
-                pos = [curr_pos[0]+i, curr_pos[1]+ j]
-                if not isWall(self.getLayout(), pos[0], pos[1]):
-                    reachable_pos.append(pos)
-        return reachable_pos
-
-    #Our reactive agent logic
-    def scanGround(self, all_agents): 
-        range = self.rangeOfSight(4)
-        for pos in range:
-            #if agent is dead in any position, call meeting
-            for agent in all_agents:
-                if ((agent.getPosition() == pos) and (agent.isDead())):
-                    self.callVoting()
-
-            # check if the impostor killed a crewmate in front of me 
-            # self.callVoting(impostorID)
-        return
-
     #Crewmate only - calling a voting session to expose impostor
-    def callVoting(self, impostorID = -1):
+    def callVoting(self):
         print("Agent ", self.getID(), " called a voting session")
         self.callingVote = True
-        self.foundImpostor = impostorID
+        print("Agent ",self.getID(), " found the impostor: ",self.foundImpostor)
         return
 
     def vote(self):

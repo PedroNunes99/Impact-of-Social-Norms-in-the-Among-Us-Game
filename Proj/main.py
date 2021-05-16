@@ -379,6 +379,11 @@ if __name__ == "__main__":
 	all_sprites.add(player)
 	all_agents.add(player)
 
+	for agent in all_agents:
+		for agent2 in all_agents:
+			if (agent != agent2):
+				agent.beliefs[agent2.getID()] = 0
+
 	pause = False
 	run   = True
 	
@@ -412,13 +417,14 @@ if __name__ == "__main__":
 			
 			for agent in all_agents:
 				agent.percept(layout)
+				if (agent.isImpostor()):
+					agent.kill(all_agents, dead_agents)
+					agent.updateTimers()
 				if (len(agent.tasks)>0 and not agent.isImpostor() and not agent.isDead()):
 					agent.scanGround(all_agents)
 					task = agent.tasks[0]
 					agent.isTask(task)
-				if (agent.isImpostor()):
-					agent.kill(all_agents, dead_agents)
-					agent.updateTimers()
+				
 				agent.draw = True 
 				#agent.checkAlarm(soundAlarm)
 				#communicate(agent)
