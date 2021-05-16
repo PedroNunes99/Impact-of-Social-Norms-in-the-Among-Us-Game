@@ -258,22 +258,15 @@ def updateWorld():
 	#check if an agent called a voting session
 	for agent in all_agents:
 		if (not agent.isImpostor()) and (agent.callingVote):
-			votingSession(agent.foundImpostor)
+			votingSession()
 			agent.callingVote = False
 
 	#draw all agents
 	draw()
 
 
-def votingSession(foundImpostor):
+def votingSession():
 	drawVotingScreen()
-
-	# CASE 1: A crewmate caught the impostor em flagrante
-	if(foundImpostor):
-		print("Case 1")
-	# CASE 2: A crewmate just found a dead body
-	else:
-		print("Case 2")
 
 	#delete already found dead bodies and re-distribute tasks
 	unassigned_tasks = [] #non completed tasks previously belonging to dead agents

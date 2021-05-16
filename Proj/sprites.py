@@ -410,12 +410,11 @@ class Crewmate(Agent):
     #Our reactive agent logic
     def scanGround(self, all_agents): 
         range = self.rangeOfSight(4)
-        found_dead = []
         for pos in range:
             #if agent is dead in any position, call meeting
             for agent in all_agents:
                 if ((agent.getPosition() == pos) and (agent.isDead())):
-                    self.callVoting(found_dead)
+                    self.callVoting()
 
             # check if the impostor killed a crewmate in front of me 
             # self.callVoting(impostorID)
