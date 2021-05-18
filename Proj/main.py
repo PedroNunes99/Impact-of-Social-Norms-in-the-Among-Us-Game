@@ -1,3 +1,4 @@
+from settings import HEIGHT, NUM_AGENTS, WIDTH
 import pygame
 from auxiliary import *
 from random import choices
@@ -166,9 +167,20 @@ def createWeapons_task():
                 all_sprites.add(weapons_task)
                 all_weapons_task.add(weapons_task)
 
-def drawVotingScreen():
+def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 	SCREEN.fill(WHITE)
-	pygame.display.flip()
+	rect_side = HEIGHT/NUM_AGENTS -2
+	top, left  = HEIGHT-60,  5
+
+	font = pygame.font.SysFont('freesansbold', 30)
+	for agent in all_agents:
+		SCREEN.blit(font.render(str(agent.getID()), 1, WHITE, RED), (left+10, top))
+		pygame.display.update()
+		top -= rect_side +10
+
+	
+	pygame.display.flip()	
+	time.sleep(5)
 
 def drawDeliberationScreen():
 	SCREEN.fill(WHITE)
@@ -249,7 +261,6 @@ def communicate(speaker):
 			listener.receiveMessage(speaker.getLayout())
 
 def updateWorld():
-
 	if (len(dead_agents) == NUM_AGENTS - 2):
 		drawWinImpostor()
 		run = False
@@ -260,7 +271,6 @@ def updateWorld():
 			drawWinCrewmates()
 			run =  False
 			return
-
 
 	all_agents.update(all_agents, agents_locations)
 
@@ -276,7 +286,6 @@ def updateWorld():
 
 	#draw all agents
 	draw()
-
 
 def checkMajority(array):
 	maxCount = 0
@@ -305,12 +314,15 @@ def checkMajority(array):
 	return majority
 
 def votingSession():
-	drawVotingScreen()
-
+	
 	#delete already found dead bodies and re-distribute tasks
 	unassigned_tasks = [] #non completed tasks previously belonging to dead agents
-	aux_voting_list = dict() #id voting ([#id voted, belief])
+
+	aux_voting_list = dict() #id : [beliefs about agent #id]
 	voting_list = dict()
+
+	old_beliefs = dict() #id: [beliefs that agent #id holds]
+	new_beliefs = dict() #id: [beliefs that agent #id holds]
 
 	for agent in all_agents:
 		if agent.isDead():
@@ -318,7 +330,7 @@ def votingSession():
 				unassigned_tasks.append(task)
 			all_agents.remove(agent)
 	
-    
+    #Collective Deliberation
 	for agent in all_agents:
 		if not agent.isDead():
 			list_ = []
@@ -328,6 +340,7 @@ def votingSession():
 			
 			aux_voting_list[agent.getID()] = sum(list_)/len(list_)
 
+	#Voting Session
 	for agent in all_agents:
 		if not agent.isDead():
 			for agent2 in all_agents:
@@ -337,15 +350,14 @@ def votingSession():
 
 	#voting_values = list(voting_list.values())
 
-	idVoted = checkMajority(list(voting_list.values()))
+	idEjected = checkMajority(list(voting_list.values()))
+	drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected)
 
 	for agent in all_agents:
-		if (idVoted != 0):
-			if (idVoted == agent.getID()):
+		if (idEjected != 0):
+			if (idEjected == agent.getID()):
 				dead_agents.add(agent)
 				all_agents.remove(agent)
-
-
 
 	for agent in all_agents:
 		if(len(unassigned_tasks) > 0):

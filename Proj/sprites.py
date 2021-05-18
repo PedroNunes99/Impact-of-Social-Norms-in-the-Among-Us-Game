@@ -10,6 +10,7 @@ from auxiliary import *
 import heapq
 import math
 
+     
 
 class Agent(pygame.sprite.Sprite):
     def __init__(self, identifier, layout, starting_room, communicates):
