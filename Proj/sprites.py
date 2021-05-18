@@ -42,10 +42,7 @@ class Agent(pygame.sprite.Sprite):
         self.new_y = -1
 
         self.draw  = False
-
-    def getBeliefs():
-        return self.beliefs
-
+        
     def vote(self):
         min_value = min(self.beliefs.values()) #Searches for the min value
         keys = [key for key in self.beliefs if self.beliefs[key] == min_value]

@@ -168,18 +168,63 @@ def createWeapons_task():
                 all_weapons_task.add(weapons_task)
 
 def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
+
 	SCREEN.fill(WHITE)
 	rect_side = HEIGHT/NUM_AGENTS -2
-	top, left  = HEIGHT-60,  5
+	drawText(SCREEN, "Deliberation Phase", 30, WIDTH/2, 10)
+	drawText(SCREEN, "Old beliefs", 20, WIDTH/2, 50)
+	top, left  = HEIGHT-60,  30
 
-	font = pygame.font.SysFont('freesansbold', 30)
+	font = pygame.font.SysFont('freesansbold', 50)
 	for agent in all_agents:
+		if (top <= 60):
+			top = HEIGHT-60
+			left += 300
 		SCREEN.blit(font.render(str(agent.getID()), 1, WHITE, RED), (left+10, top))
+		drawText(SCREEN, str(old_beliefs[agent.getID()]), 15, left+150, top+4)
 		pygame.display.update()
-		top -= rect_side +10
+		top -=  rect_side + 60
 
 	
 	pygame.display.flip()	
+	time.sleep(5)
+
+	SCREEN.fill(WHITE)
+	rect_side = HEIGHT/NUM_AGENTS -2
+	drawText(SCREEN, "Deliberation Phase", 30, WIDTH/2, 10)
+	drawText(SCREEN, "New beliefs", 20, WIDTH/2, 50)
+	top, left  = HEIGHT-60,  30
+
+	font = pygame.font.SysFont('freesansbold', 50)
+	for agent in all_agents:
+		if (top <= 60):
+			top = HEIGHT-60
+			left += 300
+		SCREEN.blit(font.render(str(agent.getID()), 1, WHITE, RED), (left+10, top))
+		drawText(SCREEN, str(new_beliefs[agent.getID()]), 15, left+150, top+4)
+		pygame.display.update()
+		top -=  rect_side + 60
+
+	pygame.display.flip()
+	time.sleep(5)
+
+	SCREEN.fill(WHITE)
+	rect_side = HEIGHT/NUM_AGENTS -2
+	drawText(SCREEN, "Voting Phase", 30, WIDTH/2, 10)
+
+	top, left  = HEIGHT-60,  30
+
+	font = pygame.font.SysFont('freesansbold', 50)
+	for agent in all_agents:
+		if (top <= 60):
+			top = HEIGHT-60
+			left += 300
+		SCREEN.blit(font.render(str(agent.getID()), 1, WHITE, RED), (left+10, top))
+		drawText(SCREEN, str(voting_list[agent.getID()]), 20, left+150, top+4)
+		pygame.display.update()
+		top -=  rect_side + 60
+
+	pygame.display.flip()
 	time.sleep(5)
 
 def drawDeliberationScreen():
@@ -280,7 +325,7 @@ def updateWorld():
 		
 	#check if an agent called a voting session
 	for agent in all_agents:
-		if (not agent.isImpostor()) and (agent.callingVote):
+		if (not agent.isImpostor()) and (agent.callingVote) and not agent.isDead():
 			votingSession()
 			agent.callingVote = False
 
@@ -328,7 +373,12 @@ def votingSession():
 		if agent.isDead():
 			for task in agent.tasks:
 				unassigned_tasks.append(task)
+			for agent2 in all_agents:
+				if agent != agent2 and not agent2.isDead():
+					agent2.beliefs.pop(agent.getID())
 			all_agents.remove(agent)
+		else:
+			old_beliefs[agent.getID()] = agent.beliefs.copy()
 	
     #Collective Deliberation
 	for agent in all_agents:
@@ -345,10 +395,11 @@ def votingSession():
 		if not agent.isDead():
 			for agent2 in all_agents:
 				if not agent2.isDead() and agent != agent2:
-					agent.beliefs[agent2.getID()] = BELIEF_MYSELF * agent.beliefs[agent2.getID()] + BELIEF_OTHERS * aux_voting_list[agent2.getID()]
+					new_belief = round(BELIEF_MYSELF * agent.beliefs[agent2.getID()] + BELIEF_OTHERS * aux_voting_list[agent2.getID()],2)
+					agent.beliefs[agent2.getID()] = new_belief
+					
+			new_beliefs[agent.getID()] = agent.beliefs.copy()
 			voting_list[agent.getID()] = agent.vote()
-
-	#voting_values = list(voting_list.values())
 
 	idEjected = checkMajority(list(voting_list.values()))
 	drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected)
@@ -465,7 +516,7 @@ if __name__ == "__main__":
 	for agent in all_agents:
 		for agent2 in all_agents:
 			if (agent != agent2):
-				agent.beliefs[agent2.getID()] = 0
+				agent.beliefs[agent2.getID()] = 0.0
 
 	pause = False
 	run   = True
