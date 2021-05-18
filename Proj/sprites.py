@@ -45,6 +45,12 @@ class Agent(pygame.sprite.Sprite):
     def getBeliefs():
         return self.beliefs
 
+    def vote(self):
+        min_value = min(self.beliefs.values()) #Searches for the min value
+        keys = [key for key in self.beliefs if self.beliefs[key] == min_value]
+        rand_key = random.choice(keys)
+        return rand_key #returns a random ID from an agent with the min value
+
     def setSettings(self,font,id_color,background_color,pos_x,pos_y):
         self.font = pygame.font.SysFont("freesansbold", 16)
         self.textSurf = self.font.render(str(self.id), 1, id_color,background_color)
@@ -434,9 +440,8 @@ class Crewmate(Agent):
         print("Agent ", self.getID(), " called a voting session")
         self.callingVote = True
         print("Agent ",self.getID(), " found the impostor: ",self.foundImpostor)
-        return
-
-    def vote(self):
+        if (self.foundImpostor != -1):
+            self.beliefs[self.foundImpostor] = -1
         return
     
 

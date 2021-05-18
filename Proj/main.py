@@ -249,6 +249,19 @@ def communicate(speaker):
 			listener.receiveMessage(speaker.getLayout())
 
 def updateWorld():
+
+	if (len(dead_agents) == NUM_AGENTS - 2):
+		drawWinImpostor()
+		run = False
+		return 
+
+	for agent in dead_agents:
+		if (agent.getID() == NUM_AGENTS):
+			drawWinCrewmates()
+			run =  False
+			return
+
+
 	all_agents.update(all_agents, agents_locations)
 
 	#update agents locations
@@ -265,16 +278,74 @@ def updateWorld():
 	draw()
 
 
+def checkMajority(array):
+	maxCount = 0
+	index = -1
+
+	n = len(array)
+
+	majority = 0
+
+	for i in range(n):
+		count = 0
+
+		for j in range(n):
+			if (array[i] == array[j]):
+				count += 1
+		
+		if (count > maxCount):
+			maxCount = count
+			index  = i
+
+	if (maxCount > n//2):
+		majority = array[index]
+	else:
+		return 0
+
+	return majority
+
 def votingSession():
 	drawVotingScreen()
 
 	#delete already found dead bodies and re-distribute tasks
 	unassigned_tasks = [] #non completed tasks previously belonging to dead agents
+	aux_voting_list = dict() #id voting ([#id voted, belief])
+	voting_list = dict()
+
 	for agent in all_agents:
 		if agent.isDead():
 			for task in agent.tasks:
 				unassigned_tasks.append(task)
 			all_agents.remove(agent)
+	
+    
+	for agent in all_agents:
+		if not agent.isDead():
+			list_ = []
+			for agent2 in all_agents:
+				if not agent2.isDead() and agent2 != agent:
+					list_.append(agent2.beliefs[agent.getID()])
+			
+			aux_voting_list[agent.getID()] = sum(list_)/len(list_)
+
+	for agent in all_agents:
+		if not agent.isDead():
+			for agent2 in all_agents:
+				if not agent2.isDead() and agent != agent2:
+					agent.beliefs[agent2.getID()] = BELIEF_MYSELF * agent.beliefs[agent2.getID()] + BELIEF_OTHERS * aux_voting_list[agent2.getID()]
+			voting_list[agent.getID()] = agent.vote()
+
+	#voting_values = list(voting_list.values())
+
+	idVoted = checkMajority(list(voting_list.values()))
+
+	for agent in all_agents:
+		if (idVoted != 0):
+			if (idVoted == agent.getID()):
+				dead_agents.add(agent)
+				all_agents.remove(agent)
+
+
 
 	for agent in all_agents:
 		if(len(unassigned_tasks) > 0):
@@ -287,7 +358,7 @@ def votingSession():
 
 # Main
 if __name__ == "__main__":
-	global SCREEN, CLOCK, layout, all_sprites, all_agents, dead_agents, agents_locations, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls,  tasks
+	global SCREEN, run, CLOCK, layout, all_sprites, all_agents, dead_agents, agents_locations, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls,  tasks
 
 	pygame.init()
 	pygame.display.set_caption("Among US simulation")
@@ -404,14 +475,6 @@ if __name__ == "__main__":
 			pygame.mixer.pause()
 		else:
 			pygame.mixer.unpause()
-
-
-		if (len(dead_agents) == NUM_AGENTS - 1):
-			drawWinImpostor()
-
-			run = False
-			pause = True
-			break
 		
 		if not pause:
 			
