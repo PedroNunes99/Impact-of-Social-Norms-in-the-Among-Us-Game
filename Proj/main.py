@@ -568,7 +568,7 @@ if __name__ == "__main__":
 	for agent in all_agents:
 		for agent2 in all_agents:
 			if (agent != agent2):
-				agent.beliefs[agent2.getID()] = 0.0
+				agent.beliefs[agent2.getID()] = 1.0
 	
 
 	pause = False

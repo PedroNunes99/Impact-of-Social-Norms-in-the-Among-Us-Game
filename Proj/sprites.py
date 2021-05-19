@@ -375,6 +375,7 @@ class Crewmate(Agent):
         self.timer        = TASK_TIME
         self.callingVote = False
         self.foundImpostor = -1
+        self.tasksDone     = 0
 
         tasks_aux = []
         nums = [j for j in range(NUM_TOTAL_TASKS)]
@@ -408,18 +409,26 @@ class Crewmate(Agent):
         return
 
     def isTask (self, task):
+        abort = True
         for i in range(len(task)):
             if (self.x == task[i][0] and self.y == task[i][1]):
                 self.inTask = True
                 if (self.timer == 0):
                     self.tasks      = self.tasks[1:]
                     self.taskLocked = []
+                    self.tasksDone += 1
                     if (len(self.tasks)>0):
                         self.randTask = random.randint(0,len(self.tasks)-1)
                     self.timer  = 20
                     self.inTask = False
                 else:
                     self.timer -= 1
+                    if (self.timer == 0 and abort):
+                        rand = random.random()
+                        print("RANDOM",rand)
+                        if (rand > TASK_SUCCESS):
+                            self.timer = 20
+                            abort = False
     
     def plan_(self):
         
