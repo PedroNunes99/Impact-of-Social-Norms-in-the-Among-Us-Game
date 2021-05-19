@@ -357,17 +357,19 @@ def updateWorld():
 		for agent in all_agents:
 			agent.callingVote = False
 
-		#If the voted agent was a crewmate and there are only 2 crewmates left, IMPOSTOR WINS
-		if (len(dead_agents) == NUM_AGENTS - 2): 
-			drawWinImpostor()
-			return 
-
 		#If Impostor was voted out, CREWMATES WIN
 		for agent in dead_agents: 				
 			if (agent.isImpostor()):
 				drawWinCrewmates()
 				return
+
+		#If the voted agent was a crewmate and there are only 2 crewmates left, IMPOSTOR WINS
+		if (len(dead_agents) == NUM_AGENTS - 2): 
+			drawWinImpostor()
+			return 
 	
+
+
 	for agent in all_agents:
 		if len(agent.tasks) != 0:
 			all_tasks_done = False
@@ -444,24 +446,39 @@ def votingSession():
 
 	#Voting Session
 	for agent in all_agents:
-		if not agent.isDead():
+		if (not agent.isDead()) and (not agent.isImpostor()):
 			for agent2 in all_agents:
 				if not agent2.isDead() and agent != agent2:
-					new_belief = round(BELIEF_MYSELF * agent.beliefs[agent2.getID()] + BELIEF_OTHERS * aux_voting_list[agent2.getID()],2)
-					agent.beliefs[agent2.getID()] = new_belief
+					#TODO: Change this
+						new_belief = round(BELIEF_MYSELF * agent.beliefs[agent2.getID()] + BELIEF_OTHERS * aux_voting_list[agent2.getID()],2)
+						agent.beliefs[agent2.getID()] = new_belief
 					
-			new_beliefs[agent.getID()] = agent.beliefs.copy()
-			voting_list[agent.getID()] = agent.vote()
+			
+		if (not agent.isDead()) and (agent.isImpostor()):
+			crewmates_beliefs = deepcopy(old_beliefs) #We only need the crewmates' beliefs, so we remove the impostor's
+			crewmates_beliefs.pop(agent.getID())
+			agent.updateBeliefDeliberation(crewmates_beliefs)
+		
+		new_beliefs[agent.getID()] = agent.beliefs.copy()
+		voting_list[agent.getID()] = agent.vote()
 
 	idEjected = checkMajority(list(voting_list.values()))
 	drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected)
 
-	for agent in all_agents:
-		if (idEjected != 0):
+	#Updating the Impostor's beliefs after everyone votes
+	impostor = all_agents.sprites()[len(all_agents)-1]
+	crewmates_votes = deepcopy(voting_list) #We only need the crewmates' votes, so we remove the impostor's
+	crewmates_votes.pop(impostor.getID())
+	impostor.updateBeliefAfterVote(crewmates_votes)
+
+	#If there was a majority in the vote
+	if (idEjected != 0):
+		for agent in all_agents:
 			if (idEjected == agent.getID()):
 				dead_agents.add(agent)
 				all_agents.remove(agent)
 
+	#Re-Assigning the dead crwmates's unfinished tasks to alive crewmates
 	for agent in all_agents:
 		if(len(unassigned_tasks) > 0):
 			task = unassigned_tasks[len(unassigned_tasks)-1]

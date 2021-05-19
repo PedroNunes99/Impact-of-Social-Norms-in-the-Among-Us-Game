@@ -55,6 +55,12 @@ class Agent(pygame.sprite.Sprite):
         self.image.fill(background_color)
         self.image.blit(self.textSurf, [pos_x, pos_y])
 
+    def decreaseBelief(self, id, factor):
+        self.beliefs[id] -= self.beliefs[id]*factor
+
+    def increaseBelief(self, id, factor):
+        self.beliefs[id] += self.beliefs[id]*factor
+
     def getPosition(self):
         return [self.x, self.y]
 
@@ -168,7 +174,6 @@ class Agent(pygame.sprite.Sprite):
                 return [[x, y]]
         return [[self.x, self.y]]
 
-
     def Dijkstra(self, dests): #TODO change to receive position!!!!!!
         source  = [self.x, self.y]
 
@@ -278,6 +283,26 @@ class Impostor(Agent) :
         for agent in all_agents:
             self.crewmates_locations[agent.getID()] = agent.getPosition()
         return super().update(all_agents, agents_positions)
+
+    def updateBeliefDeliberation(self, crewmates_beliefs):
+        #The impostor will trust less any crewmate that doesn't trust him
+        #The impostor will trust more any crewmate that does trust him
+        average_reputation = 0
+        for id in crewmates_beliefs.keys():
+            average_reputation += crewmates_beliefs[id][self.id]
+        average_reputation = average_reputation/len(crewmates_beliefs)
+
+        for id in self.beliefs:
+            if(crewmates_beliefs[id][self.id] < average_reputation):
+                self.decreaseBelief(id, 0.2)
+            elif(crewmates_beliefs[id][self.id] > average_reputation):
+                self.increaseBelief(id, 0.1)
+
+    def updateBeliefAfterVote(self, vote_list):
+        #The impostor will trust less any crewmate that voted for him
+        for id in vote_list.keys():
+            if vote_list[id] == self.id:
+                self.decreaseBelief(id, 0.5)
 
     def closestCrewmate (self):
         closest      = -1
@@ -425,7 +450,6 @@ class Crewmate(Agent):
                     self.timer -= 1
                     if (self.timer == 0 and abort):
                         rand = random.random()
-                        print("RANDOM",rand)
                         if (rand > TASK_SUCCESS):
                             self.timer = 20
                             abort = False
