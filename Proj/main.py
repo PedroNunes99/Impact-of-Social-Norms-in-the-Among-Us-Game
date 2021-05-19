@@ -190,6 +190,10 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 	time.sleep(5)
 
 	SCREEN.fill(WHITE)
+	pygame.display.flip()
+	time.sleep(0.5)
+
+	SCREEN.fill(WHITE)
 	rect_side = HEIGHT/NUM_AGENTS -2
 	drawText(SCREEN, "Deliberation Phase", 30, WIDTH/2, 10)
 	drawText(SCREEN, "New beliefs", 20, WIDTH/2, 50)
@@ -207,6 +211,10 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 
 	pygame.display.flip()
 	time.sleep(5)
+
+	SCREEN.fill(WHITE)
+	pygame.display.flip()
+	time.sleep(0.5)
 
 	SCREEN.fill(WHITE)
 	rect_side = HEIGHT/NUM_AGENTS -2
@@ -368,7 +376,9 @@ def votingSession():
 
 	old_beliefs = dict() #id: [beliefs that agent #id holds]
 	new_beliefs = dict() #id: [beliefs that agent #id holds]
-
+	
+	#removes the beliefs of all dead agents from other alive agents, removing the dead
+	#agent from all_agents list
 	for agent in all_agents:
 		if agent.isDead():
 			for task in agent.tasks:
@@ -376,9 +386,12 @@ def votingSession():
 			for agent2 in all_agents:
 				if agent != agent2 and not agent2.isDead():
 					agent2.beliefs.pop(agent.getID())
+					
 			all_agents.remove(agent)
-		else:
-			old_beliefs[agent.getID()] = agent.beliefs.copy()
+
+	#Get the beliefs of each agent before deliberation
+	for agent in all_agents:
+		old_beliefs[agent.getID()] = agent.beliefs.copy()
 	
     #Collective Deliberation
 	for agent in all_agents:
@@ -517,6 +530,7 @@ if __name__ == "__main__":
 		for agent2 in all_agents:
 			if (agent != agent2):
 				agent.beliefs[agent2.getID()] = 0.0
+	
 
 	pause = False
 	run   = True
@@ -552,7 +566,6 @@ if __name__ == "__main__":
 					agent.isTask(task)
 				
 				agent.draw = True 
-				#agent.checkAlarm(soundAlarm)
 				#communicate(agent)
 			for agent in all_agents:
 				if (not agent.isDead()):
