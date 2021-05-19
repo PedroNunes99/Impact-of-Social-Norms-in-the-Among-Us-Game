@@ -31,7 +31,6 @@ class Agent(pygame.sprite.Sprite):
         self.reconsider   = False
         self.dead         = False
         self.range        = VIS_RANGE
-        self.volume       = VOL_RANGE
 
         pos = random.choice(starting_room) #randomly chooses a position from cafetaria to spawn
             
@@ -92,16 +91,19 @@ class Agent(pygame.sprite.Sprite):
 
     def isCommunicative(self):
         return self.communicates
-
-    def rangeOfSight(self, radius):
+ 
+    def rangeOfSight(self): #We know it's ugly. C'est la vie
         reachable_pos = []
         curr_pos = self.getPosition()
-        for i in range(-radius, radius):
-            for j in range(-radius, radius):
+        for i in range(-self.range, self.range):
+            for j in range(-self.range, self.range):
                 pos = [curr_pos[0]+i, curr_pos[1]+ j]
                 if not isWall(self.getLayout(), pos[0], pos[1]):
                     reachable_pos.append(pos)
+   
         return reachable_pos
+
+
 
     def update(self, all_agents, agents_positions):
 
@@ -329,7 +331,7 @@ class Impostor(Agent) :
 
             for agent in all_agents:
 
-                range = self.rangeOfSight(VIS_RANGE)
+                range = self.rangeOfSight()
 
                 if (agent.getID() == self.target):
                     victim = agent
@@ -394,7 +396,7 @@ class Crewmate(Agent):
 
     #Our reactive agent logic
     def scanGround(self, all_agents): 
-        range = self.rangeOfSight(VIS_RANGE)
+        range = self.rangeOfSight()
         for pos in range:
             #if agent is dead in any position, call meeting
             for agent in all_agents:

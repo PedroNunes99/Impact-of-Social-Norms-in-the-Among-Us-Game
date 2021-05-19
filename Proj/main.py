@@ -53,7 +53,6 @@ def createCafetaria_task():
                 all_sprites.add(cafetaria_task)
                 all_cafetaria_task.add(cafetaria_task)
 
-
 def createReactor():
     for i in range(int(GRIDWIDTH)):
         for j in range(int(GRIDHEIGHT)):
@@ -85,7 +84,6 @@ def createEletrical():
                 eletrical = Eletrical(i,j)
                 all_sprites.add(eletrical)
                 all_eletrical.add(eletrical)
-#
 
 def createAdmin():
     for i in range(int(GRIDWIDTH)):
@@ -169,6 +167,7 @@ def createWeapons_task():
 
 def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 
+	## DELIBERATION PHASE - SHOWING OLD BELIEFS ##
 	SCREEN.fill(WHITE)
 	rect_side = HEIGHT/NUM_AGENTS -2
 	drawText(SCREEN, "Deliberation Phase", 30, WIDTH/2, 10)
@@ -185,10 +184,11 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 		pygame.display.update()
 		top -=  rect_side + 60
 
-	
 	pygame.display.flip()	
 	time.sleep(5)
 
+
+	## DELIBERATION PHASE - SHOWING NEW BELIEFS ##
 	SCREEN.fill(WHITE)
 	pygame.display.flip()
 	time.sleep(0.5)
@@ -212,6 +212,8 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 	pygame.display.flip()
 	time.sleep(5)
 
+
+	## VOTING PHASE - SHOWING VOTES ##
 	SCREEN.fill(WHITE)
 	pygame.display.flip()
 	time.sleep(0.5)
@@ -235,21 +237,38 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 	pygame.display.flip()
 	time.sleep(5)
 
-def drawDeliberationScreen():
-	SCREEN.fill(WHITE)
+	## VOTING PHASE - SHOWING EJECTED AGENT ##
+	SCREEN.fill(DARK_WATER_BLUE)
+	
+	if(idEjected == 0):
+		drawText(SCREEN, "No one was ejected...", 30, WIDTH/2, 10)
+
+	else:
+		font = pygame.font.SysFont('freesansbold', 80)
+		SCREEN.blit(font.render(str(idEjected), 1, WHITE, RED), (WIDTH/2, HEIGHT/2))
+		s = "Agent "+ str(idEjected) + " was ejected"
+		drawText(SCREEN, s, 40, WIDTH/2, 10)
+
 	pygame.display.flip()
+	time.sleep(5)
 
 def drawWinImpostor():
 	SCREEN.fill(WHITE)
 	s = "The Impostor Won"
 	drawText(SCREEN, s, 34, WIDTH/2, HEIGHT/2)
 	pygame.display.flip()
+	pygame.mixer.pause()
+	time.sleep(3)
+	pygame.quit()
 
 def drawWinCrewmates():
 	SCREEN.fill(WHITE)
 	s = "The Crewmates Won"
 	drawText(SCREEN, s, 34, WIDTH/2, HEIGHT/2)
 	pygame.display.flip()
+	pygame.mixer.pause()
+	time.sleep(3)
+	pygame.quit()
 
 #Draw main world
 def draw():		 		
@@ -302,8 +321,6 @@ def drawText(surf, text, size, x, y):
 	text_rect.midtop = (int(x),int(y))
 	surf.blit(text_surface, text_rect)
 
-def assertInRange(speaker, listener):
-	return abs(speaker.x - listener.x)<=VOL_RANGE and abs(speaker.y - listener.y)<=VOL_RANGE
 
 def communicate(speaker):
 	if (not speaker.isCommunicative()):
@@ -314,18 +331,15 @@ def communicate(speaker):
 			listener.receiveMessage(speaker.getLayout())
 
 def updateWorld():
-	if (len(dead_agents) == NUM_AGENTS - 2):
+	voting = False
+	all_tasks_done = True
+	all_agents.update(all_agents, agents_locations)
+
+	#If Impostor killed NUM_AGENT-1 crewmates, IMPOSTOR WINS
+	if (len(dead_agents) == NUM_AGENTS - 2): 	
 		drawWinImpostor()
-		run = False
 		return 
 
-	for agent in dead_agents:
-		if (agent.getID() == NUM_AGENTS):
-			drawWinCrewmates()
-			run =  False
-			return
-
-	all_agents.update(all_agents, agents_locations)
 
 	#update agents locations
 	for agent in all_agents:
@@ -335,10 +349,35 @@ def updateWorld():
 	for agent in all_agents:
 		if (not agent.isImpostor()) and (agent.callingVote) and not agent.isDead():
 			votingSession()
+			voting = True
+			agent.callingVote = False
+			break
+
+	if(voting):
+		for agent in all_agents:
 			agent.callingVote = False
 
-	#draw all agents
-	draw()
+		#If the voted agent was a crewmate and there are only 2 crewmates left, IMPOSTOR WINS
+		if (len(dead_agents) == NUM_AGENTS - 2): 
+			drawWinImpostor()
+			return 
+
+		#If Impostor was voted out, CREWMATES WIN
+		for agent in dead_agents: 				
+			if (agent.isImpostor()):
+				drawWinCrewmates()
+				return
+	
+	for agent in all_agents:
+		if len(agent.tasks) != 0:
+			all_tasks_done = False
+			break
+	#If all assigned tasks are done, CREWMATES WIN
+	if(all_tasks_done):
+		drawWinCrewmates()
+		return
+
+	draw() 	#draw all agents
 
 def checkMajority(array):
 	maxCount = 0
@@ -571,7 +610,7 @@ if __name__ == "__main__":
 				if (not agent.isDead()):
 					agent.plan_()
 			
-			updateWorld()
+			updateWorld()		
 
 		i+=1
 
