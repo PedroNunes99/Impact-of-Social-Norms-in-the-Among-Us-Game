@@ -230,7 +230,10 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 			top = HEIGHT-60
 			left += 300
 		SCREEN.blit(font.render(str(agent.getID()), 1, WHITE, RED), (left+10, top))
-		drawText(SCREEN, str(voting_list[agent.getID()]), 20, left+150, top+4)
+		if(voting_list[agent.getID()] == -1):
+			drawText(SCREEN, "Agent chose not to vote", 20, left+150, top+4)
+		else:
+			drawText(SCREEN, str(voting_list[agent.getID()]), 20, left+150, top+4)
 		pygame.display.update()
 		top -=  rect_side + 60
 
@@ -391,14 +394,14 @@ def checkMajority(array):
 
 	for i in range(n):
 		count = 0
-
-		for j in range(n):
-			if (array[i] == array[j]):
-				count += 1
-		
-		if (count > maxCount):
-			maxCount = count
-			index  = i
+		if (array[i] != -1):
+			for j in range(n):
+				if (array[i] == array[j]):
+					count += 1
+			
+			if (count > maxCount):
+				maxCount = count
+				index  = i
 
 	if (maxCount > n//2):
 		majority = array[index]

@@ -45,8 +45,10 @@ class Agent(pygame.sprite.Sprite):
     def vote(self):
         min_value = min(self.beliefs.values()) #Searches for the min value
         keys = [key for key in self.beliefs if self.beliefs[key] == min_value]
-        rand_key = random.choice(keys)
-        return rand_key #returns a random ID from an agent with the min value
+        if len(keys) > 1:
+            return -1
+        else:
+            return keys[0] 
 
     def setSettings(self,font,id_color,background_color,pos_x,pos_y):
         self.font = pygame.font.SysFont("freesansbold", 16)
@@ -55,11 +57,19 @@ class Agent(pygame.sprite.Sprite):
         self.image.fill(background_color)
         self.image.blit(self.textSurf, [pos_x, pos_y])
 
+    def normalizeBeliefs(self):
+        sum_beliefs = sum(self.beliefs.values())
+
+        for b in self.beliefs.values():
+            b = round(b/sum_beliefs, 2)
+
     def decreaseBelief(self, id, factor):
         self.beliefs[id] -= self.beliefs[id]*factor
+        self.normalizeBeliefs()
 
     def increaseBelief(self, id, factor):
         self.beliefs[id] += self.beliefs[id]*factor
+        self.normalizeBeliefs()
 
     def getPosition(self):
         return [self.x, self.y]
@@ -304,17 +314,49 @@ class Impostor(Agent) :
             if vote_list[id] == self.id:
                 self.decreaseBelief(id, 0.5)
 
-    def closestCrewmate (self):
-        closest      = -1
-        min_distance = math.inf
-        for agent in self.crewmates_status.keys():
-            if (self.crewmates_status[agent]): #If crewmate is alive
-                aux = len(self.Dijkstra([self.crewmates_locations[agent]]))
-                if (aux < min_distance):
-                    min_distance = aux
-                    closest      = agent
-                    
-        return closest
+    def closestCrewmate (self): 
+        # Returns a sorted list of crewmates ids from closest to furthest
+        crewmates_distance      = dict()
+        
+        for id in self.beliefs.keys():
+            if (self.crewmates_status[id]): #If crewmate is alive
+                crewmates_distance[id] = len(self.Dijkstra([self.crewmates_locations[id]]))
+                                   
+        return sorted(crewmates_distance, key=crewmates_distance.__getitem__)
+
+    def leastTrustedCrewmate(self): 
+        # Returns a sorted list of crewmate ids from least trusted to most trusted
+        return sorted(self.beliefs, key=self.beliefs.__getitem__)
+       
+    def getNewTarget(self, closest_crewmates = [], least_trusted_crewmates = [], isolated_crewmates=[]):
+        # Returns the crewmate that minimizes the three heuristics scores, to be the new target
+
+        total_score = dict() #crewmate_id: sum(score across lists)
+        for id in self.beliefs.keys():
+            total_score[id] = 0
+
+        i = 0
+        while((i<len(closest_crewmates)) or (i<len(least_trusted_crewmates)) or (i<len(isolated_crewmates))):
+            if(i< len(closest_crewmates)):
+                total_score[closest_crewmates[i]] += i
+
+            if(i< len(least_trusted_crewmates)):
+                total_score[least_trusted_crewmates[i]] += i
+
+            if(i< len(isolated_crewmates)):
+                total_score[isolated_crewmates[i]] += i
+            i +=1
+
+        target = 0
+        while(target == 0):
+            min_value = min(total_score.values()) #Searches for the min value
+            ids = [key for key in total_score if total_score[key] == min_value]
+            rand_id = random.choice(ids)
+            if (self.crewmates_status[rand_id] == True):
+                target = rand_id
+            else:
+                total_score.pop(rand_id)
+        return target
 
     def updateTimers(self): #Updates the kill cooldown and update timer for the nearest crewmate
         if (self.timer < TIMER_NEAREST_CREWMATE):
@@ -326,9 +368,13 @@ class Impostor(Agent) :
     def plan_(self):
         if(self.kill_timer == COOLDOWN_KILL):
             if ( self.timer == TIMER_NEAREST_CREWMATE):
-                self.target      = self.closestCrewmate() 
-            crewmate_pos     = self.crewmates_locations[self.target]
-            self.plan        = self.Dijkstra([crewmate_pos])
+                crewmates_dist = self.closestCrewmate()
+                crewmates_trust = self.leastTrustedCrewmate()
+                self.target      = self.getNewTarget(closest_crewmates= crewmates_dist, least_trusted_crewmates= crewmates_trust) 
+               
+            
+            target_pos     = self.crewmates_locations[self.target]
+            self.plan        = self.Dijkstra([target_pos])
 
         else:
             self.plan = self.moveRandom()
@@ -338,7 +384,7 @@ class Impostor(Agent) :
             if (self.kill_timer < COOLDOWN_KILL):
                 self.kill_timer += 1
 
-   
+ 
     def isImpostor(self):
         return True
 
@@ -372,8 +418,8 @@ class Impostor(Agent) :
             self.kill_timer = 0
             self.target     = 0
             
-
     def isClose(self, all_agents):
+        #Used to check if impostor is within range of a crewmate
         for agent in all_agents:
             if (not agent.isImpostor() and agent.getID() == self.target and not agent.isDead()):
                 x = agent.x
@@ -389,7 +435,7 @@ class Impostor(Agent) :
                     if (self.x + 1 == x or self.x - 1 == x or self.x == x):
                         if(self.y == y or self.y -1 == y or self.y + 1 == y):
                             return True,agent.getID()
-        return False,0
+        return False, self.getNewTarget()
 
 class Crewmate(Agent):
     def __init__(self, identifier, layout, tasks,  starting_room, communicates):
@@ -478,7 +524,6 @@ class Crewmate(Agent):
         return
     
 
-        
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, x, y):
