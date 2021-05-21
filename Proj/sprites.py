@@ -58,17 +58,17 @@ class Agent(pygame.sprite.Sprite):
         self.image.blit(self.textSurf, [pos_x, pos_y])
 
     def normalizeBeliefs(self):
-        sum_beliefs = sum(self.beliefs.values())
+        sum_beliefs = round(sum(self.beliefs.values(),2))
 
         for b in self.beliefs.values():
             b = round(b/sum_beliefs, 2)
 
     def decreaseBelief(self, id, factor):
-        self.beliefs[id] -= self.beliefs[id]*factor
+        self.beliefs[id] -= round(self.beliefs[id]*factor,2)
         self.normalizeBeliefs()
 
     def increaseBelief(self, id, factor):
-        self.beliefs[id] += self.beliefs[id]*factor
+        self.beliefs[id] += round(self.beliefs[id]*factor,2)
         self.normalizeBeliefs()
 
     def getPosition(self):
@@ -276,6 +276,7 @@ class Impostor(Agent) :
         self.image.blit(self.textSurf, [4, 0])
 
         self.tasks               = tasks
+        self.task_locked         = []
 
         self.crewmates_locations = dict() #id:(pos)
         self.crewmates_status    = dict() #id: alive/dead (boolean)
@@ -327,6 +328,18 @@ class Impostor(Agent) :
                 crewmates_distance[id] = len(self.Dijkstra([self.crewmates_locations[id]]))
                                    
         return sorted(crewmates_distance, key=crewmates_distance.__getitem__)
+    
+    def vote(self,voting_list):
+        min_value = min(self.beliefs.values()) #Searches for the min value
+        keys = [key for key in self.beliefs if self.beliefs[key] == min_value]
+        if len(keys) > 1:
+            return -1
+        else:
+            for vote in voting_list.values():
+                if vote != -1:
+                    return keys[0] 
+            return -1
+
 
     def leastTrustedCrewmate(self): 
         # Returns a sorted list of crewmate ids from least trusted to most trusted
@@ -372,6 +385,7 @@ class Impostor(Agent) :
     def plan_(self):
         if(self.kill_timer == COOLDOWN_KILL):
             if ( self.timer == TIMER_NEAREST_CREWMATE):
+                self.task_locked = []
                 crewmates_dist = self.closestCrewmate()
                 crewmates_trust = self.leastTrustedCrewmate()
                 self.target      = self.getNewTarget(closest_crewmates= crewmates_dist, least_trusted_crewmates= crewmates_trust) 
@@ -381,8 +395,10 @@ class Impostor(Agent) :
             self.plan        = self.Dijkstra([target_pos])
 
         else:
-            pos = self.choseRandomTask()
-            self.plan = self.Dijkstra([random.choice(pos)])
+            if self.task_locked == []:
+                task_locked = self.choseRandomTask()
+                self.task_locked = random.choice( task_locked)
+            self.plan = self.Dijkstra([self.task_locked])
             if (self.timer < TIMER_NEAREST_CREWMATE):
                 self.timer      += 1
 
@@ -442,9 +458,9 @@ class Impostor(Agent) :
                             return True,agent.getID()
         return False, self.getNewTarget()
     
-    def choseRandomTask(self){
+    def choseRandomTask(self):
         fake_task = random.choice(self.tasks)
-    }
+        return fake_task
 
 class Crewmate(Agent):
     def __init__(self, identifier, layout, tasks,  starting_room, communicates):
@@ -553,7 +569,7 @@ class Crewmate(Agent):
             if (id != self.id):
                 for a in all_beliefs[id].keys(): #iterating through agent #id's beliefs
                     if(a != self.id):
-                        diff = all_beliefs[id][a] - self.beliefs[a] #difference in beliefs about agent #a
+                        diff = round(all_beliefs[id][a] - self.beliefs[a],2) #difference in beliefs about agent #a
                         if( diff < 0):
                             self.decreaseBelief(a, round(abs(diff)*self.beliefs[id], 2))
                         elif( diff > 0):

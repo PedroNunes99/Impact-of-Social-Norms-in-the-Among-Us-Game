@@ -179,6 +179,9 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 		if (top <= 60):
 			top = HEIGHT-60
 			left += 300
+		for belief in old_beliefs.values():
+			for belief_ in belief.values():
+				belief_ = round(belief_,2)
 		SCREEN.blit(font.render(str(agent.getID()), 1, WHITE, RED), (left+10, top))
 		drawText(SCREEN, str(old_beliefs[agent.getID()]), 15, left+150, top+4)
 		pygame.display.update()
@@ -204,6 +207,9 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 		if (top <= 60):
 			top = HEIGHT-60
 			left += 300
+		for belief in new_beliefs.values():
+			for belief_ in belief.values():
+				belief_ = round(belief_,2)
 		SCREEN.blit(font.render(str(agent.getID()), 1, WHITE, RED), (left+10, top))
 		drawText(SCREEN, str(new_beliefs[agent.getID()]), 15, left+150, top+4)
 		pygame.display.update()
@@ -344,6 +350,9 @@ def repositionAgents():
 		agent.y = rand_pos[1]
 		agent.plan = []
 		cafetaria_pos.remove(rand_pos)
+		if agent.isImpostor():
+			agent.timer = TIMER_NEAREST_CREWMATE
+			agent.kill_timer = 0
 
 
 def updateWorld():
@@ -406,11 +415,6 @@ def updateWorld():
 		if (len(dead_agents) == NUM_AGENTS - 2): 
 			drawWinImpostor()
 			return 
-	
-
-	#for agent in all_agents:
-	#	print("ID: ",agent.getID())
-	#	print("TASKS: " ,agent.tasks)
 
 	for agent in all_agents:
 		if len(agent.tasks) != 0:
@@ -492,7 +496,11 @@ def votingSession():
 			agent.updateBeliefDeliberation(old_beliefs)
 		
 		new_beliefs[agent.getID()] = agent.beliefs.copy()
-		voting_list[agent.getID()] = agent.vote()
+		if (not agent.isImpostor()):
+			voting_list[agent.getID()] = agent.vote()
+		else:
+			voting_list_ = voting_list.copy()
+			voting_list[agent.getID()] = agent.vote(voting_list_)
 
 	idEjected = checkMajority(list(voting_list.values()))
 	drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected)
