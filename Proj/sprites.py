@@ -266,7 +266,7 @@ class Agent(pygame.sprite.Sprite):
         return path
 
 class Impostor(Agent) :
-    def __init__(self, identifier, crewmates, layout, starting_room, communicates):
+    def __init__(self, identifier, crewmates, layout, tasks, starting_room, communicates):
         Agent.__init__(self, identifier, layout, starting_room, communicates)
 
         self.font = pygame.font.SysFont("freesansbold", 16)
@@ -275,7 +275,7 @@ class Impostor(Agent) :
         self.image.fill(YELLOW)
         self.image.blit(self.textSurf, [4, 0])
 
-        self.tasks               = []
+        self.tasks               = tasks
 
         self.crewmates_locations = dict() #id:(pos)
         self.crewmates_status    = dict() #id: alive/dead (boolean)
@@ -381,7 +381,8 @@ class Impostor(Agent) :
             self.plan        = self.Dijkstra([target_pos])
 
         else:
-            self.plan = self.moveRandom()
+            pos = self.choseRandomTask()
+            self.plan = self.Dijkstra([random.choice(pos)])
             if (self.timer < TIMER_NEAREST_CREWMATE):
                 self.timer      += 1
 
@@ -440,6 +441,10 @@ class Impostor(Agent) :
                         if(self.y == y or self.y -1 == y or self.y + 1 == y):
                             return True,agent.getID()
         return False, self.getNewTarget()
+    
+    def choseRandomTask(self){
+        fake_task = random.choice(self.tasks)
+    }
 
 class Crewmate(Agent):
     def __init__(self, identifier, layout, tasks,  starting_room, communicates):

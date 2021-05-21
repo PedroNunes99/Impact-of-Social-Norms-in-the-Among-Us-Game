@@ -609,7 +609,7 @@ if __name__ == "__main__":
 		all_agents.add(player)
 		agents_locations[i] = pos
 	
-	player = Impostor(i+1, all_agents, deepcopy(layout), cafetaria_pos, True)
+	player = Impostor(i+1, all_agents, deepcopy(layout), tasks, cafetaria_pos, True)
 	agents_locations[i] = player.getPosition()
 	all_sprites.add(player)
 	all_agents.add(player)
