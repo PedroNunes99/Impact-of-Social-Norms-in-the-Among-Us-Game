@@ -294,19 +294,21 @@ class Impostor(Agent) :
             self.crewmates_locations[agent.getID()] = agent.getPosition()
         return super().update(all_agents, agents_positions)
 
-    def updateBeliefDeliberation(self, crewmates_beliefs):
+    def updateBeliefDeliberation(self, all_beliefs):
         #The impostor will trust less any crewmate that doesn't trust him
         #The impostor will trust more any crewmate that does trust him
         average_reputation = 0
-        for id in crewmates_beliefs.keys():
-            average_reputation += crewmates_beliefs[id][self.id]
-        average_reputation = average_reputation/len(crewmates_beliefs)
+        for id in all_beliefs.keys():
+            if(id != self.id):
+                average_reputation += all_beliefs[id][self.id]
+        average_reputation = average_reputation/(len(all_beliefs) - 1)
 
         for id in self.beliefs:
-            if(crewmates_beliefs[id][self.id] < average_reputation):
-                self.decreaseBelief(id, 0.2)
-            elif(crewmates_beliefs[id][self.id] > average_reputation):
-                self.increaseBelief(id, 0.1)
+            if(id != self.id):
+                if(all_beliefs[id][self.id] < average_reputation):
+                    self.decreaseBelief(id, 0.2)
+                elif(all_beliefs[id][self.id] > average_reputation):
+                    self.increaseBelief(id, 0.1)
 
     def updateBeliefAfterVote(self, vote_list):
 
@@ -445,11 +447,13 @@ class Crewmate(Agent):
         self.tasks        = tasks
         self.inTask       = False
         self.taskLocked   = []
+        self.tasksDone     = 0
         self.timer        = TASK_TIME
+
         self.callingVote = False
         self.foundImpostor = -1
-        self.tasksDone     = 0
-
+        self.lastSeenAgents = []
+       
         tasks_aux = []
         nums = [j for j in range(NUM_TOTAL_TASKS)]
 
@@ -471,14 +475,22 @@ class Crewmate(Agent):
     #Our reactive agent logic
     def scanGround(self, all_agents): 
         range = self.rangeOfSight()
+        new_seen_agents = []
+
+        for pos in range:
+            #we want to keep track of all alive agents within my range of sight
+            for agent in all_agents:
+                if((agent.getPosition() == pos) and (not agent.isDead()) and (agent.getID() != self.id)):
+                    new_seen_agents.append(agent.getID())
+        if len(new_seen_agents) > 0:
+            self.lastSeenAgents = new_seen_agents
+
         for pos in range:
             #if agent is dead in any position, call meeting
             for agent in all_agents:
                 if ((agent.getPosition() == pos) and (agent.isDead())):
                     self.callVoting()
-
-            # check if the impostor killed a crewmate in front of me 
-            # self.callVoting(impostorID)
+                
         return
 
     def isTask (self, task):
@@ -520,12 +532,27 @@ class Crewmate(Agent):
     def callVoting(self):
         print("Agent ", self.getID(), " called a voting session")
         self.callingVote = True
-        print("Agent ",self.getID(), " found the impostor: ",self.foundImpostor)
+    
         if (self.foundImpostor != -1):
-            self.beliefs[self.foundImpostor] = -1
+            print("Agent ",self.getID(), " found the impostor: ",self.foundImpostor)
+            self.decreaseBelief(self.foundImpostor, self.beliefs[self.foundImpostor]) #remove all trust in the agent
+
+        else:
+            print("Agent ",self.getID(), " now suspects of agents :",self.lastSeenAgents )
+            for id in self.lastSeenAgents:
+                self.decreaseBelief(id, 0.1)
         return
     
-    #def updateBeliefDeliberation(self, crewmates_beliefs):
+    def updateBeliefDeliberation(self, all_beliefs):
+        for id in all_beliefs.keys():
+            if (id != self.id):
+                for a in all_beliefs[id].keys(): #iterating through agent #id's beliefs
+                    if(a != self.id):
+                        diff = all_beliefs[id][a] - self.beliefs[a] #difference in beliefs about agent #a
+                        if( diff < 0):
+                            self.decreaseBelief(a, round(abs(diff)*self.beliefs[id], 2))
+                        elif( diff > 0):
+                            self.increaseBelief(a, round(abs(diff)*self.beliefs[id] , 2))
         
     def updateBeliefAfterVote(self, voting_list):
 

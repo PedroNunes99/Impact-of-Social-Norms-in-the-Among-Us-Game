@@ -488,18 +488,8 @@ def votingSession():
 
 	#Voting Session
 	for agent in all_agents:
-		if (not agent.isDead()) and (not agent.isImpostor()):
-			for agent2 in all_agents:
-				if not agent2.isDead() and agent != agent2:
-					#TODO: Change this
-						new_belief = round(BELIEF_MYSELF * agent.beliefs[agent2.getID()] + BELIEF_OTHERS * aux_voting_list[agent2.getID()],2)
-						agent.beliefs[agent2.getID()] = new_belief
-					
-			
-		if (not agent.isDead()) and (agent.isImpostor()):
-			crewmates_beliefs = deepcopy(old_beliefs) #We only need the crewmates' beliefs, so we remove the impostor's
-			crewmates_beliefs.pop(agent.getID())
-			agent.updateBeliefDeliberation(crewmates_beliefs)
+		if (not agent.isDead()):
+			agent.updateBeliefDeliberation(old_beliefs)
 		
 		new_beliefs[agent.getID()] = agent.beliefs.copy()
 		voting_list[agent.getID()] = agent.vote()
@@ -517,6 +507,8 @@ def votingSession():
 			if (idEjected == agent.getID()):
 				dead_agents.add(agent)
 				all_agents.remove(agent)
+			else:
+				agent.beliefs.pop(idEjected)
 
 	#Re-Assigning the dead crwmates's unfinished tasks to alive crewmates
 	for agent in all_agents:
