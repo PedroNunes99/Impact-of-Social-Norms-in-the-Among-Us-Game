@@ -333,9 +333,23 @@ def communicate(speaker):
 		if assertInRange(speaker, listener):
 			listener.receiveMessage(speaker.getLayout())
 
+#repositions agents after a voting session
+def repositionAgents():
+	
+	cafetaria_pos = list(getCafetaria(layout))
+
+	for agent in all_agents:
+		rand_pos = random.choice(cafetaria_pos)
+		agent.x = rand_pos[0]
+		agent.y = rand_pos[1]
+		agent.plan = []
+		cafetaria_pos.remove(rand_pos)
+
+
 def updateWorld():
 	voting = False
 	all_tasks_done = True
+	unassigned_tasks = []
 	all_agents.update(all_agents, agents_locations)
 
 	#If Impostor killed NUM_AGENT-1 crewmates, IMPOSTOR WINS
@@ -354,7 +368,29 @@ def updateWorld():
 			votingSession()
 			voting = True
 			agent.callingVote = False
+			repositionAgents()
 			break
+
+	for agent in dead_agents:
+		if len(agent.tasks) != 0:
+			for task in agent.tasks:
+				unassigned_tasks.append(task)
+				agent.tasks.remove(task)
+		
+	agents_ids = []
+
+	for agent in all_agents:
+		if not agent.isDead() and not agent.isImpostor():
+			agents_ids.append(agent.getID())
+
+	for task in unassigned_tasks:
+		rand_id = random.choice(agents_ids)
+		
+		for agent in all_agents:
+			if agent.getID() == rand_id:
+				agent.tasks.append(unassigned_tasks[0])
+				unassigned_tasks = unassigned_tasks[1:]
+
 
 	if(voting):
 		for agent in all_agents:
@@ -372,6 +408,9 @@ def updateWorld():
 			return 
 	
 
+	#for agent in all_agents:
+	#	print("ID: ",agent.getID())
+	#	print("TASKS: " ,agent.tasks)
 
 	for agent in all_agents:
 		if len(agent.tasks) != 0:
@@ -468,11 +507,9 @@ def votingSession():
 	idEjected = checkMajority(list(voting_list.values()))
 	drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected)
 
-	#Updating the Impostor's beliefs after everyone votes
-	impostor = all_agents.sprites()[len(all_agents)-1]
-	crewmates_votes = deepcopy(voting_list) #We only need the crewmates' votes, so we remove the impostor's
-	crewmates_votes.pop(impostor.getID())
-	impostor.updateBeliefAfterVote(crewmates_votes)
+	for agent in all_agents:
+		agent.updateBeliefAfterVote(voting_list)
+	
 
 	#If there was a majority in the vote
 	if (idEjected != 0):

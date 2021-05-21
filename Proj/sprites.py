@@ -309,10 +309,12 @@ class Impostor(Agent) :
                 self.increaseBelief(id, 0.1)
 
     def updateBeliefAfterVote(self, vote_list):
+
         #The impostor will trust less any crewmate that voted for him
         for id in vote_list.keys():
-            if vote_list[id] == self.id:
-                self.decreaseBelief(id, 0.5)
+            if id != self.getID():
+                if vote_list[id] == self.id:
+                    self.decreaseBelief(id, 0.5)
 
     def closestCrewmate (self): 
         # Returns a sorted list of crewmates ids from closest to furthest
@@ -523,6 +525,21 @@ class Crewmate(Agent):
             self.beliefs[self.foundImpostor] = -1
         return
     
+    #def updateBeliefDeliberation(self, crewmates_beliefs):
+        
+    def updateBeliefAfterVote(self, voting_list):
+
+        for id in voting_list.keys():
+
+            if (id != self.getID()):
+
+                #increases belief if an agent has the same vote as me
+                if (voting_list[id] == voting_list[self.getID()]):
+                    self.increaseBelief(id, 0.2)
+
+                #decreases belief if an agent votes on me
+                elif (voting_list[id] == self.getID()):
+                    self.decreaseBelief(id, 0.2)
 
 
 class Wall(pygame.sprite.Sprite):
