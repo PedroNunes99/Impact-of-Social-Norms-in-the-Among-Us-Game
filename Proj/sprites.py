@@ -60,15 +60,15 @@ class Agent(pygame.sprite.Sprite):
     def normalizeBeliefs(self):
         sum_beliefs = round(sum(self.beliefs.values(),2))
 
-        for b in self.beliefs.values():
-            b = round(b/sum_beliefs, 2)
+        for b in self.beliefs.keys():
+            self.beliefs[b] = round(self.beliefs[b]/sum_beliefs, 2)
 
     def decreaseBelief(self, id, factor):
-        self.beliefs[id] -= round(self.beliefs[id]*factor,2)
+        self.beliefs[id] -= self.beliefs[id]*factor
         self.normalizeBeliefs()
 
     def increaseBelief(self, id, factor):
-        self.beliefs[id] += round(self.beliefs[id]*factor,2)
+        self.beliefs[id] += self.beliefs[id]*factor
         self.normalizeBeliefs()
 
     def getPosition(self):
@@ -640,9 +640,11 @@ class Crewmate(Agent):
     def updateBeliefStepsAlongside(self):
         averageMaxSteps = sum(self.maxStepsAlongside.values())/len(self.maxStepsAlongside)
 
-        for id in self.maxStepsAlongside.keys():
+        #print("belief before: ", self.beliefs)
+        for id in self.beliefs.keys():
             if self.maxStepsAlongside[id] > averageMaxSteps:
                 self.increaseBelief(id, 0.1)
+        #print("belief after: ", self.beliefs)
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, x, y):
