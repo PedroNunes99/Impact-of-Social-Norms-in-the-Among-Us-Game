@@ -285,6 +285,7 @@ class Impostor(Agent) :
 
         self.timer               = TIMER_NEAREST_CREWMATE #timer to calculate nearest crewmate
         self.kill_timer          = 0 #cooldown for the kill_function
+        self.timerMostIsolated   = 0
         self.target              = 0
         self.target_locked       = False
 
@@ -298,6 +299,7 @@ class Impostor(Agent) :
         return super().update(all_agents, agents_positions)
     
     def mostIsolated(self, all_agents):
+        dist_mostIsolated = dict()
         mostIsolated = dict()
         for agent in all_agents:
             if (not agent.isDead() and not agent.isImpostor()):
@@ -306,9 +308,15 @@ class Impostor(Agent) :
                     if (not agent2.isDead() and agent!=agent2 and not agent2.isImpostor()):
                         aux_mostIsolated[agent2.getID()] =  len(self.Dijkstra([agent.x,agent.y],[[agent2.x,agent2.y]]))
             
-            mostIsolated[agent.getID()] = aux_mostIsolated 
+                mostIsolated[agent.getID()] = aux_mostIsolated 
 
-        return mostIsolated
+        for agent in all_agents:
+            if (not agent.isDead() and not agent.isImpostor()):
+                dist_mostIsolated[agent.getID()] = min(mostIsolated[agent.getID()].values())
+
+        sorted_keys = sorted(dist_mostIsolated, key=dist_mostIsolated.get)
+        
+        return sorted_keys
 
 
     def updateBeliefDeliberation(self, all_beliefs):
@@ -396,6 +404,8 @@ class Impostor(Agent) :
             self.timer += 1
         if (self.kill_timer < COOLDOWN_KILL):
             self.kill_timer += 1
+        if (self.timerMostIsolated < TIMER_MOST_ISOLATED):
+            self.timerMostIsolated += 1
 
     #Impostor's plan function
     def plan_(self, all_agents):
@@ -404,8 +414,12 @@ class Impostor(Agent) :
                 self.task_locked = []
                 crewmates_dist = self.closestCrewmate()
                 crewmates_trust = self.leastTrustedCrewmate()
-                #crewmates_isolated = self.mostIsolated(all_agents)
-                self.target      = self.getNewTarget(closest_crewmates= crewmates_dist, least_trusted_crewmates= crewmates_trust) 
+                if (self.timerMostIsolated == TIMER_MOST_ISOLATED):
+                    self.timerMostIsolated = 0
+                    crewmates_isolated = self.mostIsolated(all_agents)
+                    self.target      = self.getNewTarget(closest_crewmates= crewmates_dist, least_trusted_crewmates= crewmates_trust,isolated_crewmates=crewmates_isolated)
+                else:
+                    self.target      = self.getNewTarget(closest_crewmates= crewmates_dist, least_trusted_crewmates= crewmates_trust) 
                
             
             target_pos     = self.crewmates_locations[self.target]
