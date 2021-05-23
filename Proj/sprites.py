@@ -120,7 +120,6 @@ class Agent(pygame.sprite.Sprite):
         return reachable_pos
 
 
-
     def update(self, all_agents, agents_positions):
 
         if (not self.dead):
@@ -142,7 +141,6 @@ class Agent(pygame.sprite.Sprite):
             self.rect.x  = self.x * TILESIZE 
             self.rect.y  = self.y * TILESIZE
          
-
     def receiveMessage(self, message):
         for i in range(len(message)):
             for j in range(len(message[i])):
@@ -493,7 +491,14 @@ class Crewmate(Agent):
         self.callingVote = False
         self.foundImpostor = -1
         self.lastSeenAgents = []
-       
+
+        self.maxStepsAlongside = dict()
+        self.currentStepsAlongside = dict()
+        for id in range(1, NUM_AGENTS+1):
+            if (id != self.id):
+                self.maxStepsAlongside[id] = 0
+                self.currentStepsAlongside[id] = 0
+
         tasks_aux = []
         nums = [j for j in range(NUM_TOTAL_TASKS)]
 
@@ -512,7 +517,7 @@ class Crewmate(Agent):
     def isImpostor(self):
         return False
 
-    #Our reactive agent logic
+    
     def scanGround(self, all_agents): 
         range = self.rangeOfSight()
         new_seen_agents = []
@@ -522,9 +527,19 @@ class Crewmate(Agent):
             for agent in all_agents:
                 if((agent.getPosition() == pos) and (not agent.isDead()) and (agent.getID() != self.id)):
                     new_seen_agents.append(agent.getID())
+        
         if len(new_seen_agents) > 0:
             self.lastSeenAgents = new_seen_agents
+            for id in self.lastSeenAgents:
+                self.currentStepsAlongside[id] +=1
+                if(self.currentStepsAlongside[id] > self.maxStepsAlongside[id]):
+                    self.maxStepsAlongside[id] = self.currentStepsAlongside[id]
+                    self.updateBeliefStepsAlongside()
 
+        else:
+            self.currentStepsAlongside = dict.fromkeys(self.currentStepsAlongside, 0)
+
+        #Our reactive agent logic
         for pos in range:
             #if agent is dead in any position, call meeting
             for agent in all_agents:
@@ -608,6 +623,12 @@ class Crewmate(Agent):
                 elif (voting_list[id] == self.getID()):
                     self.decreaseBelief(id, 0.2)
 
+    def updateBeliefStepsAlongside(self):
+        averageMaxSteps = sum(self.maxStepsAlongside.values())/len(self.maxStepsAlongside)
+
+        for id in self.maxStepsAlongside.keys():
+            if self.maxStepsAlongside[id] > averageMaxSteps:
+                self.increaseBelief(id, 0.1)
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, x, y):
