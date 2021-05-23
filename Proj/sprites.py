@@ -184,8 +184,12 @@ class Agent(pygame.sprite.Sprite):
                 return [[x, y]]
         return [[self.x, self.y]]
 
-    def Dijkstra(self, dests): #TODO change to receive position!!!!!!
-        source  = [self.x, self.y]
+    def Dijkstra(self,initial_pos, dests): #TODO change to receive position!!!!!!
+        if (initial_pos == []):
+            source  = [self.x, self.y]
+
+        else:
+            source = initial_pos
 
         if (source in dests):
             return [source]
@@ -294,6 +298,20 @@ class Impostor(Agent) :
         for agent in all_agents:
             self.crewmates_locations[agent.getID()] = agent.getPosition()
         return super().update(all_agents, agents_positions)
+    
+    def mostIsolated(self, all_agents):
+        mostIsolated = dict()
+        for agent in all_agents:
+            if (not agent.isDead() and not agent.isImpostor()):
+                aux_mostIsolated = dict()
+                for agent2 in all_agents:
+                    if (not agent2.isDead() and agent!=agent2 and not agent2.isImpostor()):
+                        aux_mostIsolated[agent2.getID()] =  len(self.Dijkstra([agent.x,agent.y],[[agent2.x,agent2.y]]))
+            
+            mostIsolated[agent.getID()] = aux_mostIsolated 
+
+        return mostIsolated
+
 
     def updateBeliefDeliberation(self, all_beliefs):
         #The impostor will trust less any crewmate that doesn't trust him
@@ -325,7 +343,7 @@ class Impostor(Agent) :
         
         for id in self.beliefs.keys():
             if (self.crewmates_status[id]): #If crewmate is alive
-                crewmates_distance[id] = len(self.Dijkstra([self.crewmates_locations[id]]))
+                crewmates_distance[id] = len(self.Dijkstra([],[self.crewmates_locations[id]]))
                                    
         return sorted(crewmates_distance, key=crewmates_distance.__getitem__)
     
@@ -382,23 +400,24 @@ class Impostor(Agent) :
             self.kill_timer += 1
 
     #Impostor's plan function
-    def plan_(self):
+    def plan_(self, all_agents):
         if(self.kill_timer == COOLDOWN_KILL):
             if ( self.timer == TIMER_NEAREST_CREWMATE):
                 self.task_locked = []
                 crewmates_dist = self.closestCrewmate()
                 crewmates_trust = self.leastTrustedCrewmate()
+                #crewmates_isolated = self.mostIsolated(all_agents)
                 self.target      = self.getNewTarget(closest_crewmates= crewmates_dist, least_trusted_crewmates= crewmates_trust) 
                
             
             target_pos     = self.crewmates_locations[self.target]
-            self.plan        = self.Dijkstra([target_pos])
+            self.plan        = self.Dijkstra([],[target_pos])
 
         else:
             if self.task_locked == []:
                 task_locked = self.choseRandomTask()
                 self.task_locked = random.choice( task_locked)
-            self.plan = self.Dijkstra([self.task_locked])
+            self.plan = self.Dijkstra([],[self.task_locked])
             if (self.timer < TIMER_NEAREST_CREWMATE):
                 self.timer      += 1
 
@@ -541,7 +560,7 @@ class Crewmate(Agent):
             if (not self.taskLocked):
                 self.taskLocked = random.choice(self.tasks[0])
                 
-            new_plan = self.Dijkstra([self.taskLocked])
+            new_plan = self.Dijkstra([],[self.taskLocked])
             #if (new_plan == self.plan_before and len(self.plan_before)!=0 and not self.inTask):
              #   self.queue +=1
             self.plan        = new_plan

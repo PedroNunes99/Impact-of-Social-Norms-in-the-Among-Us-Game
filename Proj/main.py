@@ -208,8 +208,9 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 			top = HEIGHT-60
 			left += 300
 		for belief in new_beliefs.values():
-			for belief_ in belief.values():
-				belief_ = round(belief_,2)
+			for id in belief:
+				new_belief = belief[id]
+				belief[id] = round(new_belief,2)
 		SCREEN.blit(font.render(str(agent.getID()), 1, WHITE, RED), (left+10, top))
 		drawText(SCREEN, str(new_beliefs[agent.getID()]), 15, left+150, top+4)
 		pygame.display.update()
@@ -217,7 +218,6 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 
 	pygame.display.flip()
 	time.sleep(5)
-
 
 	## VOTING PHASE - SHOWING VOTES ##
 	SCREEN.fill(WHITE)
@@ -269,6 +269,7 @@ def drawWinImpostor():
 	pygame.mixer.pause()
 	time.sleep(3)
 	pygame.quit()
+	quit()
 
 def drawWinCrewmates():
 	SCREEN.fill(WHITE)
@@ -278,6 +279,7 @@ def drawWinCrewmates():
 	pygame.mixer.pause()
 	time.sleep(3)
 	pygame.quit()
+	quit()
 
 #Draw main world
 def draw():		 		
@@ -665,7 +667,10 @@ if __name__ == "__main__":
 				#communicate(agent)
 			for agent in all_agents:
 				if (not agent.isDead()):
-					agent.plan_()
+					if(not agent.isImpostor()):
+						agent.plan_()
+					else:
+						agent.plan_(all_agents)
 			
 			updateWorld()		
 
