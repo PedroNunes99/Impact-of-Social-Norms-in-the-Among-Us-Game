@@ -58,10 +58,9 @@ class Agent(pygame.sprite.Sprite):
         self.image.blit(self.textSurf, [pos_x, pos_y])
 
     def normalizeBeliefs(self):
-        sum_beliefs = round(sum(self.beliefs.values(),2))
-
+        sum_beliefs = sum(self.beliefs.values())
         for b in self.beliefs.keys():
-            self.beliefs[b] = round(self.beliefs[b]/sum_beliefs, 2)
+            self.beliefs[b] = self.beliefs[b]/sum_beliefs
 
     def decreaseBelief(self, id, factor):
         self.beliefs[id] -= self.beliefs[id]*factor
@@ -604,7 +603,7 @@ class Crewmate(Agent):
     
         if (self.foundImpostor != -1):
             print("Agent ",self.getID(), " found the impostor: ",self.foundImpostor)
-            self.decreaseBelief(self.foundImpostor, self.beliefs[self.foundImpostor]) #remove all trust in the agent
+            self.decreaseBelief(self.foundImpostor, 1) #remove all trust in the agent
 
         else:
             print("Agent ",self.getID(), " now suspects of agents :",self.lastSeenAgents )
@@ -617,11 +616,11 @@ class Crewmate(Agent):
             if (id != self.id):
                 for a in all_beliefs[id].keys(): #iterating through agent #id's beliefs
                     if(a != self.id):
-                        diff = round(all_beliefs[id][a] - self.beliefs[a],2) #difference in beliefs about agent #a
+                        diff = all_beliefs[id][a] - self.beliefs[a] #difference in beliefs about agent #a
                         if( diff < 0):
-                            self.decreaseBelief(a, round(abs(diff)*self.beliefs[id], 2))
+                            self.decreaseBelief(a, abs(diff)*self.beliefs[id])
                         elif( diff > 0):
-                            self.increaseBelief(a, round(abs(diff)*self.beliefs[id] , 2))
+                            self.increaseBelief(a, abs(diff)*self.beliefs[id])
         
     def updateBeliefAfterVote(self, voting_list):
 
@@ -636,15 +635,13 @@ class Crewmate(Agent):
                 #decreases belief if an agent votes on me
                 elif (voting_list[id] == self.getID()):
                     self.decreaseBelief(id, 0.2)
-
+    
     def updateBeliefStepsAlongside(self):
         averageMaxSteps = sum(self.maxStepsAlongside.values())/len(self.maxStepsAlongside)
 
-        #print("belief before: ", self.beliefs)
         for id in self.beliefs.keys():
             if self.maxStepsAlongside[id] > averageMaxSteps:
-                self.increaseBelief(id, 0.1)
-        #print("belief after: ", self.beliefs)
+                self.increaseBelief(id, 0.01)
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, x, y):

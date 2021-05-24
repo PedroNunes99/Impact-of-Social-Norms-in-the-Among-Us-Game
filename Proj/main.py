@@ -165,6 +165,16 @@ def createWeapons_task():
                 all_sprites.add(weapons_task)
                 all_weapons_task.add(weapons_task)
 
+def pause_():
+
+	paused = True
+
+	while paused:
+		for event in pygame.event.get():
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_p:
+					paused = False
+
 def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 
 	## DELIBERATION PHASE - SHOWING OLD BELIEFS ##
@@ -172,6 +182,10 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 	rect_side = HEIGHT/NUM_AGENTS -2
 	drawText(SCREEN, "Deliberation Phase", 30, WIDTH/2, 10)
 	drawText(SCREEN, "Old beliefs", 20, WIDTH/2, 50)
+	s = 'Press P'
+	drawText(SCREEN,s, 17, WIDTH - WIDTH/15,HEIGHT)
+	s = 'for pause'
+	drawText(SCREEN,s, 17, WIDTH - WIDTH/15,HEIGHT+20)
 	top, left  = HEIGHT-60,  30
 
 	font = pygame.font.SysFont('freesansbold', 50)
@@ -179,9 +193,9 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 		if (top <= 60):
 			top = HEIGHT-60
 			left += 300
-		for belief in old_beliefs.values():
-			for belief_ in belief.values():
-				belief_ = round(belief_,2)
+		for belief in old_beliefs.keys():
+			for value in old_beliefs[belief].keys():
+				old_beliefs[belief][value] = round(old_beliefs[belief][value],2)
 		SCREEN.blit(font.render(str(agent.getID()), 1, WHITE, RED), (left+10, top))
 		drawText(SCREEN, str(old_beliefs[agent.getID()]), 15, left+150, top+4)
 		pygame.display.update()
@@ -189,6 +203,10 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 
 	pygame.display.flip()	
 	time.sleep(5)
+	for event in pygame.event.get():
+		if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_p:
+					pause_()
 
 
 	## DELIBERATION PHASE - SHOWING NEW BELIEFS ##
@@ -200,6 +218,10 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 	rect_side = HEIGHT/NUM_AGENTS -2
 	drawText(SCREEN, "Deliberation Phase", 30, WIDTH/2, 10)
 	drawText(SCREEN, "New beliefs", 20, WIDTH/2, 50)
+	s = 'Press P'
+	drawText(SCREEN,s, 17, WIDTH - WIDTH/15,HEIGHT)
+	s = 'for pause'
+	drawText(SCREEN,s, 17, WIDTH - WIDTH/15,HEIGHT+20)
 	top, left  = HEIGHT-60,  30
 
 	font = pygame.font.SysFont('freesansbold', 50)
@@ -207,10 +229,9 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 		if (top <= 60):
 			top = HEIGHT-60
 			left += 300
-		for belief in new_beliefs.values():
-			for id in belief:
-				new_belief = belief[id]
-				belief[id] = round(new_belief,2)
+		for belief in new_beliefs.keys():
+			for value in new_beliefs[belief].keys():
+				new_beliefs[belief][value] = round(new_beliefs[belief][value],2)
 		SCREEN.blit(font.render(str(agent.getID()), 1, WHITE, RED), (left+10, top))
 		drawText(SCREEN, str(new_beliefs[agent.getID()]), 15, left+150, top+4)
 		pygame.display.update()
@@ -218,6 +239,11 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 
 	pygame.display.flip()
 	time.sleep(5)
+
+	for event in pygame.event.get():
+		if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_p:
+					pause_()
 
 	## VOTING PHASE - SHOWING VOTES ##
 	SCREEN.fill(WHITE)
@@ -227,6 +253,10 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 	SCREEN.fill(WHITE)
 	rect_side = HEIGHT/NUM_AGENTS -2
 	drawText(SCREEN, "Voting Phase", 30, WIDTH/2, 10)
+	s = 'Press P'
+	drawText(SCREEN,s, 17, WIDTH - WIDTH/15,HEIGHT)
+	s = 'for pause'
+	drawText(SCREEN,s, 17, WIDTH - WIDTH/15,HEIGHT+20)
 
 	top, left  = HEIGHT-60,  30
 
@@ -244,7 +274,12 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 		top -=  rect_side + 60
 
 	pygame.display.flip()
-	time.sleep(5)
+	time.sleep(5)	
+
+	for event in pygame.event.get():
+		if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_p:
+					pause_()	
 
 	## VOTING PHASE - SHOWING EJECTED AGENT ##
 	SCREEN.fill(DARK_WATER_BLUE)
@@ -260,6 +295,11 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 
 	pygame.display.flip()
 	time.sleep(5)
+
+	for event in pygame.event.get():
+		if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_p:
+					pause_()
 
 def drawWinImpostor():
 	SCREEN.fill(WHITE)
@@ -316,9 +356,13 @@ def draw():
 			agents_alive_count += 1
 
 	s = 'Crewmates Alive: ' + str(agents_alive_count)
-	drawText(SCREEN, s, 34, WIDTH/3 - + WIDTH/24, HEIGHT)
+	drawText(SCREEN, s, 34, WIDTH/3 - WIDTH/8, HEIGHT)
 	s = 'Dead Crewmates: '+ str(agents_dead_count)
-	drawText(SCREEN, s, 34, 2*WIDTH/3 + WIDTH/16, HEIGHT)
+	drawText(SCREEN, s, 34, WIDTH/3 + 3*WIDTH/10, HEIGHT)
+	s = 'Press P'
+	drawText(SCREEN,s, 17, WIDTH - WIDTH/15,HEIGHT)
+	s = 'for pause'
+	drawText(SCREEN,s, 17, WIDTH - WIDTH/15,HEIGHT+20)
 	
 	drawGrid()
 	pygame.display.flip()
@@ -394,11 +438,12 @@ def updateWorld():
 		if not agent.isDead() and not agent.isImpostor():
 			agents_ids.append(agent.getID())
 
+
 	for task in unassigned_tasks:
 		rand_id = random.choice(agents_ids)
 		
 		for agent in all_agents:
-			if agent.getID() == rand_id:
+			if agent.getID() == rand_id and not agent.isDead():
 				agent.tasks.append(unassigned_tasks[0])
 				unassigned_tasks = unassigned_tasks[1:]
 
@@ -419,14 +464,14 @@ def updateWorld():
 			return 
 
 	for agent in all_agents:
-		if len(agent.tasks) != 0:
-			all_tasks_done = False
-			break
+		if not agent.isDead() and not agent.isImpostor():
+			if len(agent.tasks) != 0:
+				all_tasks_done = False
+				break
 	#If all assigned tasks are done, CREWMATES WIN
 	if(all_tasks_done):
 		drawWinCrewmates()
 		return
-
 	draw() 	#draw all agents
 
 def checkMajority(array):
@@ -643,8 +688,8 @@ if __name__ == "__main__":
 			if event.type == pygame.QUIT:
 				run = False
 			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_LEFT:
-					pause = not pause
+				if event.key == pygame.K_p:
+					pause_()
 
 		if pause:
 			pygame.mixer.pause()
