@@ -265,7 +265,7 @@ class Impostor(Agent) :
             self.crewmates_locations[agent.getID()] = agent.getPosition()
         return super().update(all_agents, agents_positions)
     
-    def mostIsolated(self, all_agents):
+    def mostIsolatedCrewmate(self, all_agents):
         dist_mostIsolated = dict()
         mostIsolated = dict()
         for agent in all_agents:
@@ -284,7 +284,6 @@ class Impostor(Agent) :
         sorted_keys = sorted(dist_mostIsolated, key=dist_mostIsolated.get)
         
         return sorted_keys
-
 
     def updateBeliefDeliberation(self, all_beliefs):
         #The impostor will trust less any crewmate that doesn't trust him
@@ -330,7 +329,6 @@ class Impostor(Agent) :
                 if vote != -1:
                     return keys[0] 
             return -1
-
 
     def leastTrustedCrewmate(self): 
         # Returns a sorted list of crewmate ids from least trusted to most trusted
@@ -383,7 +381,7 @@ class Impostor(Agent) :
                 crewmates_trust = self.leastTrustedCrewmate()
                 if (self.timerMostIsolated == TIMER_MOST_ISOLATED):
                     self.timerMostIsolated = 0
-                    crewmates_isolated = self.mostIsolated(all_agents)
+                    crewmates_isolated = self.mostIsolatedCrewmate(all_agents)
                     self.target      = self.getNewTarget(closest_crewmates= crewmates_dist, least_trusted_crewmates= crewmates_trust,isolated_crewmates=crewmates_isolated)
                 else:
                     self.target      = self.getNewTarget(closest_crewmates= crewmates_dist, least_trusted_crewmates= crewmates_trust) 

@@ -702,7 +702,7 @@ if __name__ == "__main__":
 				if (agent.isImpostor()):
 					agent.kill(all_agents, dead_agents)
 					agent.updateTimers()
-				if (len(agent.tasks)>0 and not agent.isImpostor() and not agent.isDead()):
+				if (not agent.isImpostor() and len(agent.tasks)>0 and not agent.isDead()):
 					agent.scanGround(all_agents)
 					task = agent.tasks[0]
 					agent.isTask(task)
