@@ -37,7 +37,7 @@ BLUE = (0, 0, 204)
 GREY = (108,108,108)
 GREEN = (0, 255, 0)
 
-FPS = 10
+FPS = 100
 
 #Max 7 agents in total
 NUM_AGENTS = 7

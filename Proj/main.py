@@ -699,7 +699,6 @@ if __name__ == "__main__":
 		if not pause:
 			
 			for agent in all_agents:
-				agent.percept(layout)
 				if (agent.isImpostor()):
 					agent.kill(all_agents, dead_agents)
 					agent.updateTimers()

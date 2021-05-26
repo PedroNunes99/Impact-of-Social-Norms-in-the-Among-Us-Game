@@ -28,7 +28,6 @@ class Agent(pygame.sprite.Sprite):
         self.communicates = communicates
         self.layout       = layout
         self.plan         = []
-        self.reconsider   = False
         self.dead         = False
         self.range        = VIS_RANGE
 
@@ -50,7 +49,7 @@ class Agent(pygame.sprite.Sprite):
         else:
             return keys[0] 
 
-    def setSettings(self,font,id_color,background_color,pos_x,pos_y):
+    def setSettings(self,id_color,background_color,pos_x,pos_y):
         self.font = pygame.font.SysFont("freesansbold", 16)
         self.textSurf = self.font.render(str(self.id), 1, id_color,background_color)
         self.image = pygame.Surface((TILESIZE, TILESIZE))
@@ -139,34 +138,6 @@ class Agent(pygame.sprite.Sprite):
         else:
             self.rect.x  = self.x * TILESIZE 
             self.rect.y  = self.y * TILESIZE
-         
-    def receiveMessage(self, message):
-        for i in range(len(message)):
-            for j in range(len(message[i])):
-                if (self.layout[i][j] != message[i][j]):
-                    self.danger       = True
-                    self.reconsider   = True
-                    self.layout[i][j] = message[i][j]
-
-    def percept(self, layout):
-        x0 = self.x-self.range
-        y0 = self.y-self.range
-        x1 = self.x+self.range
-        y1 = self.y+self.range
-        self.reconsider = False
-        if (x0 < 0):
-            x0 = 0
-        if (y0 < 0):
-            y0 = 0
-        if (x1 > len(layout)-1):
-            x1 = len(layout)-1
-        if (y1 > len(layout[0])-1):
-            y1 = len(layout[0])-1
-        for i in range(x0, x1+1):
-            for j in range(y0, y1+1):
-                if (self.layout[i][j] != layout[i][j]):
-                    self.reconsider   = True
-                    self.layout[i][j] = layout[i][j]
 
     def moveRandom(self):
         row  = [-1, 0, 0, 1]
