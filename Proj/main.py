@@ -6,6 +6,7 @@ from settings import *
 from sprites import *
 from copy import deepcopy
 import time
+import sys
 
 def drawGrid():
     for x in range(0, WIDTH, TILESIZE):
@@ -538,8 +539,9 @@ def votingSession():
 			aux_voting_list[agent.getID()] = sum(list_)/len(list_)
 
 	#Voting Session
+	
 	for agent in all_agents:
-		if (not agent.isDead()):
+		if (not agent.isDead() and mode != '1'):
 			agent.updateBeliefDeliberation(old_beliefs)
 		
 		new_beliefs[agent.getID()] = agent.beliefs.copy()
@@ -552,8 +554,9 @@ def votingSession():
 	idEjected = checkMajority(list(voting_list.values()))
 	drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected)
 
-	for agent in all_agents:
-		agent.updateBeliefAfterVote(voting_list)
+	if (mode != '1'):
+		for agent in all_agents:
+			agent.updateBeliefAfterVote(voting_list)
 	
 
 	#If there was a majority in the vote
@@ -565,7 +568,7 @@ def votingSession():
 			else:
 				agent.beliefs.pop(idEjected)
 
-	#Re-Assigning the dead crwmates's unfinished tasks to alive crewmates
+	#Re-Assigning the dead crewmates's unfinished tasks to alive crewmates
 	for agent in all_agents:
 		if(len(unassigned_tasks) > 0):
 			task = unassigned_tasks[len(unassigned_tasks)-1]
@@ -577,7 +580,32 @@ def votingSession():
 
 # Main
 if __name__ == "__main__":
-	global SCREEN, run, CLOCK, layout, all_sprites, all_agents, dead_agents, agents_locations, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls,  tasks
+	global SCREEN, run, CLOCK, layout, all_sprites, mode, all_agents, dead_agents, agents_locations, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls,  tasks
+
+
+	if (len(sys.argv) > 1):
+
+		if (sys.argv[1] == '1'):  #Dummy execution mode: crewmates only learn if they find the impostor killing someone. The impostor also does not do fake tasks and chooses his target randomly
+			mode = '1'
+			print("Running dummy execution mode")
+
+		elif (sys.argv[1] == '2'):
+			mode = '2'
+			print("Running execution mode where the Impostor uses -> closest + leastTrusted as social norms; Crewmates use -> updateDeliberation + updateVote as social norms")
+		
+		elif (sys.argv[1] == '3'):
+			mode = '3'
+			print("Running execution mode where the Impostor uses -> closest + leastTrusted + fakeTasks as social norms; Crewmates use -> updateDeliberation + updateVote + lastSeenAgents as social norms")
+		
+		elif (sys.argv[1] == '4'):
+			mode = '4'
+			print("Running execution mode where the Impostor uses -> closest + leastTrusted + fake tasks as social norms; Crewmates use -> updateDeliberation + updateVote + lastSeenAgents + updateStepsAlongside as social norms")
+
+	else:
+		print("Wrong input. Please check the README file to run the program properly")
+		quit()
+
+	
 
 	pygame.init()
 	pygame.display.set_caption("Among US simulation")
@@ -703,7 +731,7 @@ if __name__ == "__main__":
 					agent.kill(all_agents, dead_agents)
 					agent.updateTimers()
 				if (not agent.isImpostor() and len(agent.tasks)>0 and not agent.isDead()):
-					agent.scanGround(all_agents)
+					agent.scanGround(all_agents, mode)
 					task = agent.tasks[0]
 					agent.isTask(task)
 				
@@ -714,7 +742,7 @@ if __name__ == "__main__":
 					if(not agent.isImpostor()):
 						agent.plan_()
 					else:
-						agent.plan_(all_agents)
+						agent.plan_(all_agents,mode)
 			
 			updateWorld()		
 

@@ -373,33 +373,35 @@ class Impostor(Agent) :
             self.timerMostIsolated += 1
 
     #Impostor's plan function
-    def plan_(self, all_agents):
+    def plan_(self, all_agents,mode):
         if(self.kill_timer == COOLDOWN_KILL):
             if ( self.timer == TIMER_NEAREST_CREWMATE):
-                self.task_locked = []
-                crewmates_dist = self.closestCrewmate()
-                crewmates_trust = self.leastTrustedCrewmate()
-                if (self.timerMostIsolated == TIMER_MOST_ISOLATED):
-                    self.timerMostIsolated = 0
-                    crewmates_isolated = self.mostIsolatedCrewmate(all_agents)
+                if (mode != '1'):
+                    self.task_locked = []
+                    crewmates_trust = []
+                    crewmates_isolated = []
+                    crewmates_dist = self.closestCrewmate()
+                    if (mode == '2'):
+                        crewmates_trust = self.leastTrustedCrewmate()
+                    if (self.timerMostIsolated == TIMER_MOST_ISOLATED):
+                        self.timerMostIsolated = 0
+                        if (mode == '4'):
+                            crewmates_isolated = self.mostIsolatedCrewmate(all_agents)
                     self.target      = self.getNewTarget(closest_crewmates= crewmates_dist, least_trusted_crewmates= crewmates_trust,isolated_crewmates=crewmates_isolated)
-                else:
-                    self.target      = self.getNewTarget(closest_crewmates= crewmates_dist, least_trusted_crewmates= crewmates_trust) 
-               
+                    
             
             target_pos     = self.crewmates_locations[self.target]
             self.plan        = self.Dijkstra([],[target_pos])
 
         else:
-            if self.task_locked == []:
-                task_locked = self.choseRandomTask()
-                self.task_locked = random.choice( task_locked)
-            self.plan = self.Dijkstra([],[self.task_locked])
-            if (self.timer < TIMER_NEAREST_CREWMATE):
-                self.timer      += 1
-
-            if (self.kill_timer < COOLDOWN_KILL):
-                self.kill_timer += 1
+            if (mode == '1' or mode == '2'):
+                self.plan = self.moveRandom()
+            else:
+                if self.task_locked == []:
+                    task_locked = self.choseRandomTask()
+                    self.task_locked = random.choice( task_locked)
+                self.plan = self.Dijkstra([],[self.task_locked])
+        
 
  
     def isImpostor(self):
@@ -497,7 +499,7 @@ class Crewmate(Agent):
         return False
 
     
-    def scanGround(self, all_agents): 
+    def scanGround(self, all_agents, mode): 
         range = self.rangeOfSight()
         new_seen_agents = []
 
@@ -507,13 +509,16 @@ class Crewmate(Agent):
                 if((agent.getPosition() == pos) and (not agent.isDead()) and (agent.getID() != self.id)):
                     new_seen_agents.append(agent.getID())
         
+        
         if len(new_seen_agents) > 0:
             self.lastSeenAgents = new_seen_agents
             for id in self.lastSeenAgents:
                 self.currentStepsAlongside[id] +=1
                 if(self.currentStepsAlongside[id] > self.maxStepsAlongside[id]):
                     self.maxStepsAlongside[id] = self.currentStepsAlongside[id]
-                    self.updateBeliefStepsAlongside()
+                    
+                    if (mode == '4'):
+                        self.updateBeliefStepsAlongside()
 
         else:
             self.currentStepsAlongside = dict.fromkeys(self.currentStepsAlongside, 0)
@@ -523,7 +528,7 @@ class Crewmate(Agent):
             #if agent is dead in any position, call meeting
             for agent in all_agents:
                 if ((agent.getPosition() == pos) and (agent.isDead())):
-                    self.callVoting()
+                    self.callVoting(mode)
                 
         return
 
@@ -563,7 +568,7 @@ class Crewmate(Agent):
             self.plan = self.moveRandom()
 
     #Crewmate only - calling a voting session to expose impostor
-    def callVoting(self):
+    def callVoting(self, mode):
         print("Agent ", self.getID(), " called a voting session")
         self.callingVote = True
     
@@ -573,9 +578,10 @@ class Crewmate(Agent):
 
         else:
             print("Agent ",self.getID(), " now suspects of agents :",self.lastSeenAgents )
-            for id in self.lastSeenAgents:
-                self.decreaseBelief(id, 0.1)
-        return
+            if (mode == '3' or mode == '4'):
+                for id in self.lastSeenAgents:
+                    self.decreaseBelief(id, 0.1)
+            return
     
     def updateBeliefDeliberation(self, all_beliefs):
         for id in all_beliefs.keys():
