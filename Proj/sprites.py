@@ -13,7 +13,7 @@ import math
      
 
 class Agent(pygame.sprite.Sprite):
-    def __init__(self, identifier, layout, starting_room, communicates):
+    def __init__(self, identifier, layout, starting_room):
         pygame.sprite.Sprite.__init__(self)
         self.id           = identifier
         self.font = pygame.font.SysFont("freesansbold", 16)
@@ -25,7 +25,6 @@ class Agent(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
         self.beliefs      = dict() #id:(belief)
-        self.communicates = communicates
         self.layout       = layout
         self.plan         = []
         self.dead         = False
@@ -103,8 +102,6 @@ class Agent(pygame.sprite.Sprite):
     def isDead(self):
         return self.dead
 
-    def isCommunicative(self):
-        return self.communicates
  
     def rangeOfSight(self): #We know it's ugly. C'est la vie
         reachable_pos = []
@@ -238,8 +235,8 @@ class Agent(pygame.sprite.Sprite):
         return path
 
 class Impostor(Agent) :
-    def __init__(self, identifier, crewmates, layout, tasks, starting_room, communicates):
-        Agent.__init__(self, identifier, layout, starting_room, communicates)
+    def __init__(self, identifier, crewmates, layout, tasks, starting_room):
+        Agent.__init__(self, identifier, layout, starting_room)
 
         self.font = pygame.font.SysFont("freesansbold", 16)
         self.textSurf = self.font.render("I", 1, BLACK, YELLOW)
@@ -436,7 +433,7 @@ class Impostor(Agent) :
             dead_agents.add(victim)
             self.crewmates_status[self.target] = False
             victim.plan = []
-            victim.setSettings(pygame.font.SysFont("freesansbold", 16),WHITE,BLACK,2,0)
+            victim.setSettings(WHITE,BLACK,2,0)
             self.kill_timer = 0
             self.target     = 0
             
@@ -464,8 +461,8 @@ class Impostor(Agent) :
         return fake_task
 
 class Crewmate(Agent):
-    def __init__(self, identifier, layout, tasks,  starting_room, communicates):
-        super().__init__(identifier, layout,  starting_room, communicates)
+    def __init__(self, identifier, layout, tasks,  starting_room):
+        super().__init__(identifier, layout,  starting_room)
         self.tasks        = tasks
         self.inTask       = False
         self.taskLocked   = []

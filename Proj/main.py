@@ -657,14 +657,14 @@ if __name__ == "__main__":
 	agents_locations = dict() #id: location
 
 	for i in range(1, NUM_AGENTS):
-		player = Crewmate(i, deepcopy(layout), tasks, cafetaria_pos, True)
+		player = Crewmate(i, deepcopy(layout), tasks, cafetaria_pos)
 		pos =[player.x,player.y]
 		cafetaria_pos.remove(pos) 
 		all_sprites.add(player)
 		all_agents.add(player)
 		agents_locations[i] = pos
 	
-	player = Impostor(i+1, all_agents, deepcopy(layout), tasks, cafetaria_pos, True)
+	player = Impostor(i+1, all_agents, deepcopy(layout), tasks, cafetaria_pos)
 	agents_locations[i] = player.getPosition()
 	all_sprites.add(player)
 	all_agents.add(player)
