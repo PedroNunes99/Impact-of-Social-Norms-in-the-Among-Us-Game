@@ -28,12 +28,31 @@ Our project is implemented in [Python](https://www.python.org/downloads/). To ru
 * [PyGame](https://www.pygame.org/wiki/GettingStarted)
 * [MatplotLib](https://matplotlib.org/stable/users/installing.html)
 
-To run the project, simply run:
+The project can be executed according to four distinct execution modes:
+* Dummy, a very basic implementation, with very little interaction between agents. 
 ```
-python main.py
+python main.py 1
+```
+* Mode #1, a slightly more complex implementation, where the Impostor focuses on killing Crewmates that don't trust them and the Crewmates have some cooperation.
+```
+python main.py 2
+```
+* Mode #2, in which the Impostor also tries to fool other agents, and Crewmates now suspect of agents that they've last seen before finding a dead body.
+```
+python main.py 3
 ```
 
-If you wish to reproduce our results and run the project in several different execution modes, run:
+* Mode #3, our most sophisticated model. Now, the Impostor can find out more vulnerable targets and Crewmates will trust more in who's been near them.
+```
+python main.py 4
+```
+
+It is possible to reproduce our results and run the project in several different execution modes. Running `demo.py` will execute each of the execution modes 100 times and print out a summary for each execution in the following structure:
+```
+Winner(C/I) num-voting-sessions num-false-accusations num-iterations
+```
+
+To try out this demonstration, simply run:
 ```
 python demo.py
 ```
