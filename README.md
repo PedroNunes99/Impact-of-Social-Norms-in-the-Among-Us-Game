@@ -46,6 +46,7 @@ python main.py 3
 ```
 python main.py 4
 ```
+In all execution modes, it is possible to pause the screen during any stage of a Voting Session. To do this, one can press `P` to pause, and then again to unpause.
 
 It is possible to reproduce our results and run the project in several different execution modes. Running `demo.py` will execute each of the execution modes 100 times and print out a summary for each execution in the following structure:
 ```
