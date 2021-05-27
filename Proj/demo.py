@@ -1,6 +1,5 @@
 import subprocess
 
-'''
 f = open("dummy.txt",'w')
 for i in range (100):
 	print("dummy ",i)
@@ -31,3 +30,4 @@ for i in range (100):
 	print("test4c ",i)
 	out = subprocess.run(['python','main.py','4','demo'], capture_output=True,universal_newlines=True).stdout
 	f.write(out+"\n")
+'''
