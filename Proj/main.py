@@ -1,5 +1,6 @@
-from settings import HEIGHT, NUM_AGENTS, WIDTH
-import pygame
+import contextlib
+with contextlib.redirect_stdout(None):
+    import pygame
 from auxiliary import *
 from random import choices
 from settings import *
@@ -203,7 +204,7 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 		top -=  rect_side + 60
 
 	pygame.display.flip()	
-	time.sleep(5)
+	time.sleep(SLEEP_TIME)
 	for event in pygame.event.get():
 		if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_p:
@@ -213,7 +214,7 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 	## DELIBERATION PHASE - SHOWING NEW BELIEFS ##
 	SCREEN.fill(WHITE)
 	pygame.display.flip()
-	time.sleep(0.5)
+	time.sleep(CHANGE_SCREEN_TIME)
 
 	SCREEN.fill(WHITE)
 	rect_side = HEIGHT/NUM_AGENTS -2
@@ -239,7 +240,7 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 		top -=  rect_side + 60
 
 	pygame.display.flip()
-	time.sleep(5)
+	time.sleep(SLEEP_TIME)
 
 	for event in pygame.event.get():
 		if event.type == pygame.KEYDOWN:
@@ -249,7 +250,7 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 	## VOTING PHASE - SHOWING VOTES ##
 	SCREEN.fill(WHITE)
 	pygame.display.flip()
-	time.sleep(0.5)
+	time.sleep(CHANGE_SCREEN_TIME)
 
 	SCREEN.fill(WHITE)
 	rect_side = HEIGHT/NUM_AGENTS -2
@@ -275,7 +276,7 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 		top -=  rect_side + 60
 
 	pygame.display.flip()
-	time.sleep(5)	
+	time.sleep(SLEEP_TIME)	
 
 	for event in pygame.event.get():
 		if event.type == pygame.KEYDOWN:
@@ -295,7 +296,7 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 		drawText(SCREEN, s, 40, WIDTH/2, 10)
 
 	pygame.display.flip()
-	time.sleep(5)
+	time.sleep(SLEEP_TIME)
 
 	for event in pygame.event.get():
 		if event.type == pygame.KEYDOWN:
@@ -303,22 +304,27 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 					pause_()
 
 def drawWinImpostor():
+	global false_acusations, voting_sessions
+	print("I ",voting_sessions ,false_acusations,end='')
+	
 	SCREEN.fill(WHITE)
 	s = "The Impostor Won"
 	drawText(SCREEN, s, 34, WIDTH/2, HEIGHT/2)
 	pygame.display.flip()
 	pygame.mixer.pause()
-	time.sleep(3)
+	time.sleep(WIN_SCREEN_TIME)
 	pygame.quit()
 	quit()
 
 def drawWinCrewmates():
+	global false_acusations, voting_sessions
+	print("C ",voting_sessions ,false_acusations,end='')
 	SCREEN.fill(WHITE)
 	s = "The Crewmates Won"
 	drawText(SCREEN, s, 34, WIDTH/2, HEIGHT/2)
 	pygame.display.flip()
 	pygame.mixer.pause()
-	time.sleep(3)
+	time.sleep(WIN_SCREEN_TIME)
 	pygame.quit()
 	quit()
 
@@ -422,6 +428,8 @@ def updateWorld():
 	for agent in all_agents:
 		if (not agent.isImpostor()) and (agent.callingVote) and not agent.isDead():
 			votingSession()
+			global voting_sessions
+			voting_sessions += 1
 			voting = True
 			agent.callingVote = False
 			repositionAgents()
@@ -502,7 +510,6 @@ def checkMajority(array):
 	return majority
 
 def votingSession():
-	
 	#delete already found dead bodies and re-distribute tasks
 	unassigned_tasks = [] #non completed tasks previously belonging to dead agents
 
@@ -547,10 +554,12 @@ def votingSession():
 		new_beliefs[agent.getID()] = agent.beliefs.copy()
 		if (not agent.isImpostor()):
 			voting_list[agent.getID()] = agent.vote()
+			if (voting_list[agent.getID()] != NUM_AGENTS and voting_list[agent.getID()] != -1):
+				global false_acusations
+				false_acusations+=1
 		else:
 			voting_list_ = voting_list.copy()
 			voting_list[agent.getID()] = agent.vote(voting_list_)
-
 	idEjected = checkMajority(list(voting_list.values()))
 	drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected)
 
@@ -580,26 +589,31 @@ def votingSession():
 
 # Main
 if __name__ == "__main__":
-	global SCREEN, run, CLOCK, layout, all_sprites, mode, all_agents, dead_agents, agents_locations, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls,  tasks
-
+	global demo, SCREEN, run, CLOCK, layout, all_sprites, mode, false_acusations,voting_sessions , all_agents, dead_agents, agents_locations, all_admin,all_admin_task,all_storage,all_storage_task,all_shield,all_shield_task,all_navigation,all_navigation_task,all_weapons,all_weapons_task ,all_cafetaria, all_cafetaria_task, all_medbay, all_medbay_task, all_reactor, all_reactor_task, all_eletrical,all_eletrical_task, all_walls,  tasks
+	
+	false_acusations = 0
+	voting_sessions = 0
+	demo = 0
 
 	if (len(sys.argv) > 1):
 
+		if (len(sys.argv) == 3 and sys.argv[2] == 'demo'):
+			demo = 1
 		if (sys.argv[1] == '1'):  #Dummy execution mode: crewmates only learn if they find the impostor killing someone. The impostor also does not do fake tasks and chooses his target randomly
 			mode = '1'
-			print("Running dummy execution mode")
+			#print("Running dummy execution mode")
 
 		elif (sys.argv[1] == '2'):
 			mode = '2'
-			print("Running execution mode where the Impostor uses -> closest + leastTrusted as social norms; Crewmates use -> updateDeliberation + updateVote as social norms")
+			#print("Running execution mode where the Impostor uses -> closest + leastTrusted as social norms; Crewmates use -> updateDeliberation + updateVote as social norms")
 		
 		elif (sys.argv[1] == '3'):
 			mode = '3'
-			print("Running execution mode where the Impostor uses -> closest + leastTrusted + fakeTasks as social norms; Crewmates use -> updateDeliberation + updateVote + lastSeenAgents as social norms")
+			#print("Running execution mode where the Impostor uses -> closest + leastTrusted + fakeTasks as social norms; Crewmates use -> updateDeliberation + updateVote + lastSeenAgents as social norms")
 		
 		elif (sys.argv[1] == '4'):
 			mode = '4'
-			print("Running execution mode where the Impostor uses -> closest + leastTrusted + fake tasks as social norms; Crewmates use -> updateDeliberation + updateVote + lastSeenAgents + updateStepsAlongside as social norms")
+			#print("Running execution mode where the Impostor uses -> closest + leastTrusted + fake tasks as social norms; Crewmates use -> updateDeliberation + updateVote + lastSeenAgents + updateStepsAlongside as social norms")
 
 	else:
 		print("Wrong input. Please check the README file to run the program properly")
@@ -609,7 +623,10 @@ if __name__ == "__main__":
 
 	pygame.init()
 	pygame.display.set_caption("Among US simulation")
-	SCREEN = pygame.display.set_mode((WIDTH, HEIGHT+40))
+	if demo:
+		SCREEN = pygame.display.set_mode((WIDTH, HEIGHT+40),pygame.HIDDEN)
+	else:
+		SCREEN = pygame.display.set_mode((WIDTH, HEIGHT+40))
 	CLOCK = pygame.time.Clock()
 
 	# Create agents
@@ -749,6 +766,6 @@ if __name__ == "__main__":
 		i+=1
 
 	pygame.mixer.pause()
-	time.sleep(5)
+	time.sleep(SLEEP_TIME)
 	pygame.quit()
 

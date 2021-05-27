@@ -37,7 +37,11 @@ BLUE = (0, 0, 204)
 GREY = (108,108,108)
 GREEN = (0, 255, 0)
 
-FPS = 7
+FPS = 1000
+
+SLEEP_TIME = 5 #5
+CHANGE_SCREEN_TIME = 0.5 #0.5
+WIN_SCREEN_TIME = 3 #3
 
 #Max 7 agents in total
 NUM_AGENTS = 7

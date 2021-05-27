@@ -569,15 +569,15 @@ class Crewmate(Agent):
 
     #Crewmate only - calling a voting session to expose impostor
     def callVoting(self, mode):
-        print("Agent ", self.getID(), " called a voting session")
+        #print("Agent ", self.getID(), " called a voting session")
         self.callingVote = True
     
         if (self.foundImpostor != -1):
-            print("Agent ",self.getID(), " found the impostor: ",self.foundImpostor)
+            #print("Agent ",self.getID(), " found the impostor: ",self.foundImpostor)
             self.decreaseBelief(self.foundImpostor, 1) #remove all trust in the agent
 
         else:
-            print("Agent ",self.getID(), " now suspects of agents :",self.lastSeenAgents )
+            #print("Agent ",self.getID(), " now suspects of agents :",self.lastSeenAgents )
             if (mode == '3' or mode == '4'):
                 for id in self.lastSeenAgents:
                     self.decreaseBelief(id, 0.1)
