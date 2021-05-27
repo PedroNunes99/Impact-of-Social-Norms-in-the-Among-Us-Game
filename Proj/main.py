@@ -305,7 +305,7 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 
 def drawWinImpostor():
 	global false_acusations, voting_sessions
-	print("I ",voting_sessions ,false_acusations,end='')
+	print("I ",voting_sessions ,false_acusations,i,end='')
 	
 	SCREEN.fill(WHITE)
 	s = "The Impostor Won"
@@ -318,7 +318,7 @@ def drawWinImpostor():
 
 def drawWinCrewmates():
 	global false_acusations, voting_sessions
-	print("C ",voting_sessions ,false_acusations,end='')
+	print("C ",voting_sessions ,false_acusations,i,end='')
 	SCREEN.fill(WHITE)
 	s = "The Crewmates Won"
 	drawText(SCREEN, s, 34, WIDTH/2, HEIGHT/2)
@@ -383,14 +383,6 @@ def drawText(surf, text, size, x, y):
 	text_rect.midtop = (int(x),int(y))
 	surf.blit(text_surface, text_rect)
 
-
-def communicate(speaker):
-	if (not speaker.isCommunicative()):
-		return
-	for listener in all_agents:
-		if (speaker.getID() == listener.getID()): continue
-		if assertInRange(speaker, listener):
-			listener.receiveMessage(speaker.getLayout())
 
 #repositions agents after a voting session
 def repositionAgents():
@@ -753,7 +745,6 @@ if __name__ == "__main__":
 					agent.isTask(task)
 				
 				agent.draw = True 
-				#communicate(agent)
 			for agent in all_agents:
 				if (not agent.isDead()):
 					if(not agent.isImpostor()):
