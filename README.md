@@ -29,7 +29,6 @@ We also keep some test results in the `Tests_Results/` directory for consultatio
 Our project is implemented in [Python](https://www.python.org/downloads/). To run our project, you must have the following packages installed:
 * [Numpy](https://numpy.org/install/)
 * [PyGame](https://www.pygame.org/wiki/GettingStarted)
-* [MatplotLib](https://matplotlib.org/stable/users/installing.html)
 
 #### Running the Project using Python
 The project can be executed according to four distinct execution modes:
