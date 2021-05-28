@@ -190,7 +190,7 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 	drawText(SCREEN,s, 17, WIDTH - WIDTH/15,HEIGHT+20)
 	top, left  = HEIGHT-60,  30
 
-	font = pygame.font.SysFont('freesansbold', 50)
+	font = pygame.font.SysFont(pygame.font.get_fonts()[0], 40,bold=True)
 	for agent in all_agents:
 		if (top <= 60):
 			top = HEIGHT-60
@@ -226,7 +226,7 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 	drawText(SCREEN,s, 17, WIDTH - WIDTH/15,HEIGHT+20)
 	top, left  = HEIGHT-60,  30
 
-	font = pygame.font.SysFont('freesansbold', 50)
+	font = pygame.font.SysFont(pygame.font.get_fonts()[0], 40,bold=True)
 	for agent in all_agents:
 		if (top <= 60):
 			top = HEIGHT-60
@@ -262,7 +262,7 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 
 	top, left  = HEIGHT-60,  30
 
-	font = pygame.font.SysFont('freesansbold', 50)
+	font = pygame.font.SysFont(pygame.font.get_fonts()[0], 40,bold=True)
 	for agent in all_agents:
 		if (top <= 60):
 			top = HEIGHT-60
@@ -290,7 +290,7 @@ def drawVotingScreen(old_beliefs, new_beliefs, voting_list, idEjected):
 		drawText(SCREEN, "No one was ejected...", 30, WIDTH/2, 10)
 
 	else:
-		font = pygame.font.SysFont('freesansbold', 80)
+		font = pygame.font.SysFont(pygame.font.get_fonts()[0], 40, bold=True)
 		SCREEN.blit(font.render(str(idEjected), 1, WHITE, RED), (WIDTH/2, HEIGHT/2))
 		s = "Agent "+ str(idEjected) + " was ejected"
 		drawText(SCREEN, s, 40, WIDTH/2, 10)
@@ -314,7 +314,7 @@ def drawWinImpostor():
 	pygame.mixer.pause()
 	time.sleep(WIN_SCREEN_TIME)
 	pygame.quit()
-	quit()
+	sys.exit()
 
 def drawWinCrewmates():
 	global false_acusations, voting_sessions
@@ -326,7 +326,7 @@ def drawWinCrewmates():
 	pygame.mixer.pause()
 	time.sleep(WIN_SCREEN_TIME)
 	pygame.quit()
-	quit()
+	sys.exit()
 
 #Draw main world
 def draw():		 		
@@ -609,7 +609,7 @@ if __name__ == "__main__":
 
 	else:
 		print("Wrong input. Please check the README file to run the program properly")
-		quit()
+		sys.exit()
 
 	
 
@@ -718,6 +718,7 @@ if __name__ == "__main__":
 	# Main cycle
 	i = 0
 	while run:
+
 		
 		CLOCK.tick(FPS)
 		for event in pygame.event.get():

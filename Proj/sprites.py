@@ -16,11 +16,11 @@ class Agent(pygame.sprite.Sprite):
     def __init__(self, identifier, layout, starting_room):
         pygame.sprite.Sprite.__init__(self)
         self.id           = identifier
-        self.font = pygame.font.SysFont("freesansbold", 16)
+        self.font = pygame.font.SysFont(pygame.font.get_fonts()[0], 11,bold = True)
         self.textSurf = self.font.render(str(self.id), 1, WHITE,DARKRED)
         self.image = pygame.Surface((TILESIZE, TILESIZE))
         self.image.fill(DARKRED)
-        self.image.blit(self.textSurf, [2, 0]) 
+        self.image.blit(self.textSurf, [2, -1]) 
 
         self.rect = self.image.get_rect()
 
@@ -49,7 +49,7 @@ class Agent(pygame.sprite.Sprite):
             return keys[0] 
 
     def setSettings(self,id_color,background_color,pos_x,pos_y):
-        self.font = pygame.font.SysFont("freesansbold", 16)
+        self.font = pygame.font.SysFont(pygame.font.get_fonts()[0], 11,bold=True)
         self.textSurf = self.font.render(str(self.id), 1, id_color,background_color)
         self.image = pygame.Surface((TILESIZE, TILESIZE))
         self.image.fill(background_color)
@@ -238,11 +238,11 @@ class Impostor(Agent) :
     def __init__(self, identifier, crewmates, layout, tasks, starting_room):
         Agent.__init__(self, identifier, layout, starting_room)
 
-        self.font = pygame.font.SysFont("freesansbold", 16)
+        self.font = pygame.font.SysFont(pygame.font.get_fonts()[0], 11,bold=True)
         self.textSurf = self.font.render("I", 1, BLACK, YELLOW)
         self.image = pygame.Surface((TILESIZE, TILESIZE))
         self.image.fill(YELLOW)
-        self.image.blit(self.textSurf, [4, 0])
+        self.image.blit(self.textSurf, [4, -1])
 
         self.tasks               = tasks
         self.task_locked         = []
