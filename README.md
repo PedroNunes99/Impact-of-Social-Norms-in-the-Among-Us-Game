@@ -17,8 +17,7 @@ In certain situations, a _voting session_ takes place. Then, the _voting screen 
 The project is alocated in the `Proj/` directory. There, we'll find a number of files:
 * `main.py`: The main module where the project execution is done. 
 * `sprites.py`: A file with the project classes. The most important ones are the _Agent_, _Crewmate_, and _Impostor_. The rest are only simple classes describing the spaceship rooms, the tasks, and other necessary rendering classes.
-* `settings.py`: A file with a number of supporting fixed variables used throughout the simulation.
-  ** In this file we represent important variables like the number of tasks of each agent, the cooldown kill for the impostor and the task's cooldown. 
+* `settings.py`: A file with a number of supporting fixed variables used throughout the simulation. In this file we represent important variables like the number of tasks of each agent, the cooldown kill for the impostor and the tasks' cooldown. 
 * `AmongUs.txt`: A support file to build the spaceship screen.
 * `auxiliary.py`: A support file containing a few getter functions for the tasks and map recognition.
 * `demo.py`: A file to run our experimental results.
