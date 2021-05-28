@@ -21,6 +21,9 @@ The project is alocated in the `Proj/` directory. There, we'll find a number of 
 * `AmongUs.txt`: A support file to build the spaceship screen.
 * `auxiliary.py`: A support file containing a few getter functions for the tasks and map recognition.
 * `demo.py`: A file to run our experimental results.
+* `main.exe`: An executable file.
+
+We also keep some test results in the `Tests_Results/` directory for consultation. 
 
 ### Running and Requirements
 Our project is implemented in [Python](https://www.python.org/downloads/). To run our project, you must have the following packages installed:
@@ -28,6 +31,7 @@ Our project is implemented in [Python](https://www.python.org/downloads/). To ru
 * [PyGame](https://www.pygame.org/wiki/GettingStarted)
 * [MatplotLib](https://matplotlib.org/stable/users/installing.html)
 
+#### Running the Project using Python
 The project can be executed according to four distinct execution modes:
 * Dummy, a very basic implementation, with very little interaction between agents. 
 ```
@@ -57,3 +61,10 @@ To try out this demonstration, simply run:
 ```
 python demo.py
 ```
+
+#### Running the Project using the Executables
+We also provided a pre-compiled executable file. To run it, first decide which execution mode you want to try. Then, go to `Proj/` directory and run:
+* For Dummy mode, ` start .\main.exe 1`
+* For Mode #1, ` start .\main.exe 2`
+* For Mode #2, ` start .\main.exe 3`
+* For Mode #3, ` start .\main.exe 4`
